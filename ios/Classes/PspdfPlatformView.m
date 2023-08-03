@@ -99,6 +99,8 @@
         PSPDFAnnotationToolbarConfiguration *configuration = [[PSPDFAnnotationToolbarConfiguration alloc] initWithAnnotationGroups:@[
             [PSPDFAnnotationGroup groupWithItems:@[
                 [PSPDFAnnotationGroupItem itemWithType:PSPDFAnnotationStringHighlight],
+            ]],
+            [PSPDFAnnotationGroup groupWithItems:@[
                 [PSPDFAnnotationGroupItem itemWithType:PSPDFAnnotationStringUnderline]
             ]]
         ]];
