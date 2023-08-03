@@ -95,6 +95,15 @@
         [_channel setMethodCallHandler:^(FlutterMethodCall * _Nonnull call, FlutterResult  _Nonnull result) {
             [weakSelf handleMethodCall:call result:result];
         }];
+
+        PSPDFAnnotationToolbarConfiguration *configuration = [[PSPDFAnnotationToolbarConfiguration alloc] initWithAnnotationGroups:@[
+            [PSPDFAnnotationGroup groupWithItems:@[
+                [PSPDFAnnotationGroupItem itemWithType:PSPDFAnnotationStringHighlight],
+                [PSPDFAnnotationGroupItem itemWithType:PSPDFAnnotationStringUnderline]
+            ]]
+        ]];
+        
+        _pdfViewController.annotationToolbarController.annotationToolbar.configurations = @[configuration];
     }
 
     return self;
