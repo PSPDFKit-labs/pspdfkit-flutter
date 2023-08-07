@@ -9,6 +9,8 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import com.pspdfkit.document.formatters.DocumentJsonFormatter
+import com.pspdfkit.document.processor.PdfProcessor
+import com.pspdfkit.document.processor.PdfProcessorTask
 import com.pspdfkit.flutter.pspdfkit.util.*
 import com.pspdfkit.flutter.pspdfkit.util.Preconditions.requireNotNullNotEmpty
 import com.pspdfkit.forms.ChoiceFormElement
@@ -29,6 +31,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 internal class PSPDFKitView(
     val context: Context,
@@ -418,6 +421,70 @@ internal class PSPDFKitView(
                 } catch (e: Exception) {
                     result.error("Error while setting measurement precision", e.message, null)
                 }
+            }
+
+            "processAnnotations" -> {
+
+                val annotationType: String? = call.argument<String>("type")
+                val action: String? = call.argument<String>("processingMode")
+                val destinationPath: String? = call.argument<String>("destinationPath")
+
+                if (annotationType.isNullOrEmpty()) {
+                    result.error(
+                        "InvalidArgument",
+                        "Annotation type argument is null or empty", null
+                    )
+                    return
+                }
+
+                if (destinationPath.isNullOrEmpty()) {
+                    result.error(
+                        "InvalidArgument",
+                        "Destination path argument is null or empty", null
+                    )
+                    return
+                }
+
+                val destinationFile = File("$destinationPath")
+
+                //create destination directory
+                val destinationDirectory = destinationFile.parentFile
+                if (destinationDirectory?.exists() != true) {
+                    destinationDirectory?.mkdirs()
+                }
+
+                if (action.isNullOrEmpty()) {
+                    result.error("InvalidArgument", "Action argument is null or empty", null)
+                    return
+                }
+
+                val task: PdfProcessorTask = PdfProcessorTask.fromDocument(document)
+                if (annotationType == "all") {
+                    when (action) {
+                        "flatten" -> task.changeAllAnnotations(PdfProcessorTask.AnnotationProcessingMode.FLATTEN)
+                        "remove" -> task.changeAllAnnotations(PdfProcessorTask.AnnotationProcessingMode.DELETE)
+                        "embed" -> task.changeAllAnnotations(PdfProcessorTask.AnnotationProcessingMode.FLATTEN)
+                        "print" -> task.changeAllAnnotations(PdfProcessorTask.AnnotationProcessingMode.PRINT)
+                        else -> {
+                            result.error("InvalidArgument", "Action argument is invalid", null)
+                            return
+                        }
+                    }
+                } else {
+                    // TODO: Handle specific annotation types
+                    result.error("InvalidArgument", "Annotation type not supported", null)
+                }
+                // noinspection checkResult
+                PdfProcessor.processDocumentAsync(task, destinationFile)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ _: PdfProcessor.ProcessorProgress ->
+
+                    }, { throwable: Throwable ->
+                        result.error("PdfProcessorException", throwable.message, null)
+                    }, {
+                        result.success(true)
+                    })
             }
 
             else -> result.notImplemented()
