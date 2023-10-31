@@ -161,7 +161,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         ? null
                         : const EdgeInsets.only(top: kToolbarHeight),
                     child: PspdfkitWidget(
-                        documentPath: extractedDocument.path))))));
+                      documentPath: extractedDocument.path,
+                      onPspdfkitWidgetCreated: (view) {
+                        view.setPageChangedListener((pageIndex) async {
+                          var pageSize =
+                              await view.getPageSizeForPage(pageIndex);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(
+                                'Page changed to $pageIndex, Size: ${pageSize.width} x ${pageSize.height}'),
+                          ));
+                        });
+                      },
+                    ))))));
   }
 
   void showDocumentPlatformStyle() async {

@@ -96,4 +96,11 @@ public class EventDispatcher {
     public void notifyDocumentLoaded(@NotNull PdfDocument document) {
         sendEvent("pspdfkitDocumentLoaded", document.getUid());
     }
+
+    public void  notifyPageChanged(@NotNull PdfDocument document, int pageIndex) {
+        sendEvent("pspdfkitPageChanged", new HashMap<String, Object>() {{
+            put("documentId", document.getUid());
+            put("pageIndex", pageIndex);
+        }});
+    }
 }

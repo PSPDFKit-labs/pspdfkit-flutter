@@ -101,4 +101,26 @@ class PspdfkitWidgetController {
       _channel.invokeMethod('setMeasurementPrecision', <String, dynamic>{
         'measurementPrecision': precision.name,
       });
+
+  Future<Size> getPageSizeForPage(int pageIndex) async {
+    final Map<dynamic, dynamic>? result = await _channel
+        .invokeMapMethod<dynamic, dynamic>(
+            'getPageSize', {'pageIndex': pageIndex});
+    if (result == null) {
+      throw Exception('Failed to get page size for page $pageIndex');
+    }
+    return Size(result['width'] as double, result['height'] as double);
+  }
+
+  void setPageChangedListener(Function(int) onPageChanged) {
+    _channel.setMethodCallHandler((MethodCall call) async {
+      switch (call.method) {
+        case 'pspdfkitPageChanged':
+          onPageChanged(call.arguments['pageIndex'] as int);
+          break;
+        default:
+          throw MissingPluginException();
+      }
+    });
+  }
 }

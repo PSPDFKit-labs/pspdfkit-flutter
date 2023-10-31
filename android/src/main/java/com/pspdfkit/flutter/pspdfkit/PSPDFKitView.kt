@@ -47,6 +47,8 @@ internal class PSPDFKitView(
         methodChannel = MethodChannel(messenger, "com.pspdfkit.widget.$id")
         methodChannel.setMethodCallHandler(this)
 
+        EventDispatcher.getInstance().setChannel(methodChannel)
+
         val configurationAdapter = ConfigurationAdapter(context, configurationMap)
         val password = configurationAdapter.password
         val pdfConfiguration = configurationAdapter.build()
@@ -418,6 +420,13 @@ internal class PSPDFKitView(
                 } catch (e: Exception) {
                     result.error("Error while setting measurement precision", e.message, null)
                 }
+            }
+
+            "getPageSize" -> {
+                val pageIndex: Int = requireNotNull(call.argument("pageIndex"))
+                val pageSize = document.getPageSize(pageIndex);
+                val size = mapOf<String,Any>("width" to pageSize.width, "height" to pageSize.height)
+                result.success(size)
             }
 
             else -> result.notImplemented()

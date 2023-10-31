@@ -23,6 +23,11 @@ class FlutterPdfUiFragment : PdfUiFragment() {
         }
     }
 
+    override fun onPageChanged(document: PdfDocument, pageIndex: Int) {
+        super.onPageChanged(document, pageIndex)
+        EventDispatcher.getInstance().notifyPageChanged(document,pageIndex)
+    }
+
     fun setMeasurementScale(scale: Scale?) {
         this.scale = scale
     }
