@@ -196,7 +196,25 @@
         document.measurementPrecision = measurementPrecision;
 
         
-    } else {
+    } else if ([@"getPageSize" isEqualToString:call.method]) {
+        NSNumber *pageIndex = call.arguments[@"pageIndex"];
+        if (!pageIndex) {
+            result([FlutterError errorWithCode:@"" message:@"pageIndex is required." details:nil]);
+            return;
+        }
+        
+        PSPDFDocument *document = pdfViewController.document;
+        if (!document || !document.isValid) {
+            result([FlutterError errorWithCode:@"" message:@"PDF document not found or is invalid." details:nil]);
+            return;
+        }
+        CGSize pageSize = [[document pageInfoForPageAtIndex:[pageIndex unsignedLongValue]] size];
+        result(@{@"width" :
+                     [NSNumber numberWithFloat:pageSize.width],
+                 @"height" :
+                     [NSNumber numberWithFloat:pageSize.height]});
+    }
+    else {
         result(FlutterMethodNotImplemented);
     }
 }

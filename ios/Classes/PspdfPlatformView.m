@@ -14,7 +14,7 @@
 @import PSPDFKit;
 @import PSPDFKitUI;
 
-@interface PspdfPlatformView() <PSPDFViewControllerDelegate>
+@interface PspdfPlatformView() <PSPDFViewControllerDelegate, PSPDFDocumentViewControllerDelegate>
 @property int64_t platformViewId;
 @property (nonatomic) FlutterMethodChannel *channel;
 @property (nonatomic, weak) UIViewController *flutterViewController;
@@ -64,6 +64,7 @@
             _pdfViewController.appearanceModeManager.appearanceMode = [PspdfkitFlutterConverter appearanceMode:configurationDictionary];
             _pdfViewController.pageIndex = [PspdfkitFlutterConverter pageIndex:configurationDictionary];
             _pdfViewController.delegate = self;
+            _pdfViewController.documentViewController.delegate = self;
 
             if ((id)configurationDictionary != NSNull.null) {
                 NSString *key = @"leftBarButtonItems";
@@ -98,6 +99,16 @@
     }
 
     return self;
+}
+
+// MARK: - PSPDFDocumentViewControllerDelegate
+
+- (void)documentViewController:(PSPDFDocumentViewController *)documentViewController didChangeSpreadIndex:(NSInteger)oldSpreadIndex {
+    NSDictionary *arguments = @{
+        @"documentId": self.pdfViewController.document.UID,
+        @"pageIndex": [NSNumber numberWithUnsignedLong:self.pdfViewController.pageIndex]
+    };
+    [_channel invokeMethod:@"pspdfkitPageChanged" arguments:arguments];
 }
 
 - (void)dealloc {
