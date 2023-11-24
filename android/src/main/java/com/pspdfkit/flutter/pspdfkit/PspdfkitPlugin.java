@@ -241,6 +241,9 @@ public class PspdfkitPlugin
                 String documentUrl = call.argument("serverUrl");
                 String jwt = call.argument("jwt");
 
+                List<String> tokens= call.argument("tokens");
+                List<String> layers= call.argument("layers");
+
                 requireNotNullNotEmpty(documentUrl, "Document path");
                 requireNotNullNotEmpty(jwt, "JWT");
 
@@ -264,6 +267,10 @@ public class PspdfkitPlugin
                                 .activityClass(FlutterInstantPdfActivity.class)
                                 .configuration(configurationAdapterInstant.build())
                                 .build();
+
+                intentInstant.putExtra("tokens", tokens.toArray(new String[tokens.size()]));
+                intentInstant.putExtra("layers", layers.toArray(new String[layers.size()]));
+                intentInstant.putExtra("serverUrl", documentUrl);
 
                 activity.startActivity(intentInstant);
 

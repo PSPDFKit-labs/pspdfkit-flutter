@@ -9,6 +9,11 @@ package com.pspdfkit.flutter.pspdfkit
 ///
 
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.FrameLayout
+import android.widget.Spinner
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.instant.document.InstantPdfDocument
 import com.pspdfkit.instant.exceptions.InstantException
@@ -16,15 +21,45 @@ import com.pspdfkit.instant.ui.InstantPdfActivity
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.atomic.AtomicReference
 
+
 /**
  * For communication with the PSPDFKit plugin, we keep a static reference to the current
  * activity.
  */
 class FlutterInstantPdfActivity : InstantPdfActivity() {
+
+
     override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
         bindActivity()
+        var tokens = intent.getStringArrayExtra("tokens")?.toList()
+        var layers = intent.getStringArrayExtra("layers")?.toList()
+        var serverUrl = intent.getStringExtra("serverUrl")
+
+        //Add a dropdown for switching between layers
+        val layerSelector = Spinner(this)
+        val params = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.setMargins(0, 0, 0, 0)
+        layerSelector.layoutParams = params
+        val spinnerArrayAdapter: ArrayAdapter<String> =
+            ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, layers!!)
+        layerSelector.adapter = spinnerArrayAdapter
+        layerSelector.setSelection(0)
+        layerSelector.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                setDocument(serverUrl!!, tokens!![p2])
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+            }
+        }
+        val layout = findViewById<FrameLayout>(R.id.pspdf__activity_content)
+        layout.addView(layerSelector)
     }
+
 
     override fun onPause() {
         // Notify the Flutter PSPDFKit plugin that the activity is going to enter the onPause state.
@@ -36,7 +71,7 @@ class FlutterInstantPdfActivity : InstantPdfActivity() {
         super.onDestroy()
         releaseActivity()
     }
-    
+
     override fun onDocumentLoaded(pdfDocument: PdfDocument) {
         super.onDocumentLoaded(pdfDocument)
         val result = loadedDocumentResult.getAndSet(null)
@@ -48,7 +83,7 @@ class FlutterInstantPdfActivity : InstantPdfActivity() {
         val result = loadedDocumentResult.getAndSet(null)
         result?.success(false)
     }
-    
+
     override fun onSyncStarted(instantDocument: InstantPdfDocument) {
         super.onSyncStarted(instantDocument)
         EventDispatcher.getInstance()

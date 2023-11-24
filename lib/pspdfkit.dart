@@ -92,11 +92,15 @@ class Pspdfkit {
   /// Returns false if the document could not be opened.
   ///
   static Future<bool?> presentInstant(String serverUrl, String jwt,
-          [dynamic configuration]) async =>
+          [dynamic configuration,
+          List<String>? tokens,
+          List<String>? layers]) async =>
       await _channel.invokeMethod('presentInstant', <String, dynamic>{
         'serverUrl': serverUrl,
         'jwt': jwt,
-        'configuration': configuration
+        'configuration': configuration,
+        'tokens': tokens,
+        'layers': layers,
       });
 
   /// Sets the value of a form field by specifying its fully qualified field name.
