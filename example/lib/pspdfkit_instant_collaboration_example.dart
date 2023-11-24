@@ -156,6 +156,16 @@ class _PspdfkitInstantCollaborationExampleState
                       child: const Text('Enter Document URL'),
                     ),
                   ),
+
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                  ),
+                  ElevatedButton(
+                      onPressed: () {
+                        _loadDocumentJson(
+                            context, 'http://192.168.0.111:3000/api/documents');
+                      },
+                      child: const Text('Load Instant Layers')),
                   // Delay for syncing local changes
                   const Padding(
                     padding: EdgeInsets.all(4.0),
@@ -250,6 +260,45 @@ class _PspdfkitInstantCollaborationExampleState
     }
   }
 
+  void _loadDocumentJson(BuildContext context, String? url) {
+    if (url != null) {
+      showDialog<dynamic>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          });
+
+      _getDocumentJson(url).then((data) async {
+        var doc = data['documents'][0] as Map<String, dynamic>;
+        var tokes = doc['tokens'] as List<dynamic>;
+        var layers = doc['layers'] as List<dynamic>;
+        await Pspdfkit.presentInstant(
+          'http://192.168.0.111:8080',
+          tokes[0],
+          {
+            enableInstantComments: enableComments,
+          },
+          tokes.map((e) => e as String).toList(),
+          layers.map((e) => e as String).toList(),
+        );
+        await Pspdfkit.setDelayForSyncingLocalChanges(delayTime);
+        await Pspdfkit.setListenToServerChanges(enableListenToServerChanges);
+      }).catchError((dynamic onError) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(onError.toString()),
+        ));
+        Navigator.of(context).pop();
+      });
+    } else {
+      if (kDebugMode) {
+        print('No URL');
+      }
+    }
+  }
+
   /// Fetches the document from the instant demo server.
   /// The server returns a JWT token that is used to authenticate the user.
   Future<InstantDocumentDescriptor> _getDocument(String url) async {
@@ -259,6 +308,21 @@ class _PspdfkitInstantCollaborationExampleState
     final data = json.decode(response.body) as Map<String, dynamic>;
     final document = InstantDocumentDescriptor.fromJson(data);
     return document;
+  }
+
+  Future<Map<String, dynamic>> _getDocumentJson(String url) async {
+    // The header is necessary to receive valid json response.
+    try {
+      http.Response response = await client.get(Uri.parse(url), headers: {
+        'Authorization': 'Basic ${base64.encode(utf8.encode('cato:secret'))}'
+      });
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      return data;
+    } catch (e) {
+      print(e);
+      rethrow;
+    }
   }
 }
 
