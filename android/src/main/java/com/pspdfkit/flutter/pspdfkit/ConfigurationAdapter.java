@@ -617,8 +617,10 @@ class ConfigurationAdapter {
     private void configureEnableDocumentEditor(boolean enableDocumentEditor) {
         if (enableDocumentEditor) {
             configuration.enableDocumentEditor();
+            configuration.enableContentEditing();
         } else {
             configuration.disableDocumentEditor();
+            configuration.disableContentEditing();
         }
     }
 
