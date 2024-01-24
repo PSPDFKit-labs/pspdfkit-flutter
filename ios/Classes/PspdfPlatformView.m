@@ -14,6 +14,17 @@
 @import PSPDFKit;
 @import PSPDFKitUI;
 
+@interface CustomPageView : PSPDFPageView
+@end
+
+@implementation CustomPageView
+
+- (void)didSelectAnnotations:(nonnull NSArray<PSPDFAnnotation *> *)annotations {
+    [super didSelectAnnotations:annotations];
+    NSLog(@"didSelectAnnotations: %@", annotations);
+}
+@end
+
 @interface PspdfPlatformView() <PSPDFViewControllerDelegate>
 @property int64_t platformViewId;
 @property (nonatomic) FlutterMethodChannel *channel;
@@ -64,6 +75,10 @@
             _pdfViewController.appearanceModeManager.appearanceMode = [PspdfkitFlutterConverter appearanceMode:configurationDictionary];
             _pdfViewController.pageIndex = [PspdfkitFlutterConverter pageIndex:configurationDictionary];
             _pdfViewController.delegate = self;
+
+            [_pdfViewController updateConfigurationWithBuilder:^(PSPDFConfigurationBuilder *builder) {
+                [builder overrideClass:PSPDFPageView.class withClass:CustomPageView.class];
+            }];
 
             if ((id)configurationDictionary != NSNull.null) {
                 NSString *key = @"leftBarButtonItems";
