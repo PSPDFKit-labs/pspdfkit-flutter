@@ -311,6 +311,10 @@ class MethodChannelPspdfkitFlutter extends PspdfkitFlutterPlatform {
   @override
   set pdfViewControllerDidDismiss(VoidCallback? pdfViewControllerDidDismiss);
 
+  /// SpreadIndexDidChange callback for PDFViewController
+  @override
+  set spreadIndexDidChange(SpreadIndexDidChangeCallback? spreadIndexDidChange);
+
   /// Called when instant synchronization starts.
   @override
   set instantSyncStarted(InstantSyncStartedCallback? instantSyncStarted);
@@ -356,6 +360,9 @@ class MethodChannelPspdfkitFlutter extends PspdfkitFlutterPlatform {
           break;
         case 'pdfViewControllerDidDismiss':
           pdfViewControllerDidDismiss?.call();
+          break;
+        case 'spreadIndexDidChange':
+          spreadIndexDidChange?.call(call.arguments as Map);
           break;
         case 'pspdfkitInstantSyncStarted':
           instantSyncStarted?.call(call.arguments as String);

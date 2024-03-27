@@ -27,6 +27,8 @@ typedef InstantDownloadFailedCallback = void Function(
 
 typedef PspdfkitDocumentLoadedCallback = void Function(String documentId);
 
+typedef SpreadIndexDidChangeCallback = void Function(Map? index);
+
 abstract class PspdfkitFlutterPlatform extends PlatformInterface {
   /// Constructs a PspdfkitFlutterPlatform.
   PspdfkitFlutterPlatform() : super(token: _token);
@@ -184,6 +186,9 @@ abstract class PspdfkitFlutterPlatform extends PlatformInterface {
 
   /// ViewControllerDidDismiss callback for PDFViewController
   VoidCallback? pdfViewControllerDidDismiss;
+
+  /// SpreadIndexDidChange callback for PDFViewController
+  SpreadIndexDidChangeCallback? spreadIndexDidChange;
 
   /// Called when instant synchronization starts.
   InstantSyncStartedCallback? instantSyncStarted;

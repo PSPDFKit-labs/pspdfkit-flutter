@@ -254,6 +254,11 @@ class Pspdfkit {
     PspdfkitFlutterPlatform.instance.pdfViewControllerDidDismiss = callback;
   }
 
+  /// SpreadIndexDidChange callback for PDFViewController. Only available on iOS.
+  static set spreadIndexDidChange(SpreadIndexDidChangeCallback? callback) {
+    PspdfkitFlutterPlatform.instance.spreadIndexDidChange = callback;
+  }
+
   /// Called when instant synchronization starts.
   static set instantSyncStarted(InstantSyncStartedCallback? callback) {
     PspdfkitFlutterPlatform.instance.instantSyncStarted = callback;

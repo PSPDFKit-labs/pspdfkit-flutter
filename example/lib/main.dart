@@ -114,6 +114,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     Pspdfkit.flutterPdfFragmentAdded = () => flutterPdfFragmentAdded();
     Pspdfkit.pspdfkitDocumentLoaded =
         (documentId) => pspdfkitDocumentLoaded(documentId);
+    Pspdfkit.spreadIndexDidChange = (dynamic arguments) => spreadIndexDidChangeHandler(arguments);
   }
 
   @override
@@ -160,6 +161,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void pdfViewControllerDidDismissHandler() {
     if (kDebugMode) {
       print('pdfViewControllerDidDismissHandler');
+    }
+  }
+
+  void spreadIndexDidChangeHandler(Map? index) {
+    if (kDebugMode) {
+      print('spreadIndexDidChangeHandler: $index');
     }
   }
 

@@ -132,6 +132,15 @@ PSPDFSettingKey const PSPDFSettingKeyHybridEnvironment = @"com.pspdfkit.hybrid-e
     } else {
         [PspdfkitFlutterHelper processMethodCall:call result:result forViewController:self.pdfViewController];
     }
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(spreadIndexDidChange:) name:PSPDFDocumentViewControllerSpreadIndexDidChangeNotification object:nil];
+}
+
+- (void)spreadIndexDidChange:(NSNotification *)notification {
+    long oldPageIndex = [notification.userInfo[@"PSPDFDocumentViewControllerOldSpreadIndexKey"] longValue];
+    long currentPageIndex = [notification.userInfo[@"PSPDFDocumentViewControllerSpreadIndexKey"] longValue];
+    NSDictionary *pageIndices = @{@"oldPageIndex": @(oldPageIndex), @"currentPageIndex": @(currentPageIndex)};
+    NSLog(@"spreadIndexDidChange");
+    [channel invokeMethod:@"spreadIndexDidChange" arguments:pageIndices];
 }
 
 - (void) setupViewController:(NSDictionary *)configurationDictionary result:(FlutterResult)result  {
