@@ -25,6 +25,7 @@ static FlutterMethodChannel *channel;
 @implementation PspdfkitPlugin
 
 PSPDFSettingKey const PSPDFSettingKeyHybridEnvironment = @"com.pspdfkit.hybrid-environment";
+static dispatch_once_t once;
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
     PspdfPlatformViewFactory *platformViewFactory = [[PspdfPlatformViewFactory alloc] initWithMessenger:[registrar messenger]];
@@ -180,7 +181,14 @@ PSPDFSettingKey const PSPDFSettingKeyHybridEnvironment = @"com.pspdfkit.hybrid-e
 }
 
 - (void)pdfViewControllerDidDismiss:(PSPDFViewController *)pdfController {
+    once = 0;
     [channel invokeMethod:@"pdfViewControllerDidDismiss" arguments:nil];
+}
+
+- (void)pdfViewController:(PSPDFViewController *)pdfController didEndDisplayingPageView:(PSPDFPageView *)pageView forPageAtIndex:(NSInteger)pageIndex {
+    dispatch_once(&once, ^ {
+      NSLog(@"Document Loaded");
+    });
 }
 
 - (void)instantClient:(nonnull PSPDFInstantClient *)instantClient didFailAuthenticationForDocumentDescriptor:(nonnull id<PSPDFInstantDocumentDescriptor>)documentDescriptor {
