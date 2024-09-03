@@ -11,7 +11,7 @@
 #include <Foundation/Foundation.h>
 #import "PspdfkitFlutterConverter.h"
 #import "pspdfkit_flutter-Swift.h"
-
+#import "SharedSession.h"
 
 @implementation PspdfkitFlutterHelper
 
@@ -208,7 +208,21 @@
         result(nil);
     } else if ([@"getZoomScale" isEqualToString:call.method]) {
         result(FlutterMethodNotImplemented);
-    }else {
+    } else if ([@"showAddPageView" isEqualToString:call.method]) {
+        
+        NSString *filePath = call.arguments[@"filePath"];
+        PSPDFDocumentEditorConfiguration *documentEditorConfiguration = PSPDFDocumentEditorConfiguration.defaultConfiguration;
+        PSPDFNewPageViewController *newPageViewController = [[PSPDFNewPageViewController alloc] initWithDocumentEditorConfiguration:documentEditorConfiguration];
+        newPageViewController.delegate = [SharedSession sharedInstance];
+        [[SharedSession sharedInstance] setPdfViewController:pdfViewController];
+        [[SharedSession sharedInstance] setFilePath:filePath];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:newPageViewController];
+            [pdfViewController presentViewController:navController animated:YES completion:nil];
+        });
+    }
+    else {
         result(FlutterMethodNotImplemented);
     }
 }
