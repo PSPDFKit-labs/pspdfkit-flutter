@@ -49,6 +49,11 @@ class PspdfkitFlutterWeb extends PspdfkitFlutterPlatform {
   }
 
   @override
+  Future<bool?> showAddPageView(String filePath) {
+    throw UnimplementedError(_notSupportedOnWebMessage);
+  }
+
+  @override
   Future getAllUnsavedAnnotations() async {
     throw UnimplementedError(_notSupportedOnWebMessage);
   }

@@ -48,6 +48,12 @@ class PspdfkitWidgetControllerWeb extends PspdfkitWidgetController {
   }
 
   @override
+  Future<bool?> showAddPageView(String filePath) async {
+    await pspdfkitInstance.showAddPageView(filePath);
+    return Future.value(true);
+  }
+
+  @override
   Future<dynamic> getAllUnsavedAnnotations() {
     return pspdfkitInstance.getAllAnnotations();
   }

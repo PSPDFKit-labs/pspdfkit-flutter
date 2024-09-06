@@ -173,6 +173,11 @@ class MethodChannelPspdfkitFlutter extends PspdfkitFlutterPlatform {
   Future<bool?> exportXfdf(String xfdfPath) async => methodChannel
       .invokeMethod('exportXfdf', <String, String>{'xfdfPath': xfdfPath});
 
+  /// Opens an "Add Page" view to create a new template.
+  @override
+  Future<bool?> showAddPageView(String filePath) async => methodChannel
+      .invokeMethod('showAddPageView', <String, String>{'showAddPageView': filePath});
+
   /// Saves the document back to its original location if it has been changed.
   /// If there were no changes to the document, the document file will not be modified.
   @override

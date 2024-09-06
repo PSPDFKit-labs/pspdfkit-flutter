@@ -101,6 +101,10 @@ class PspdfkitWidgetControllerNative extends PspdfkitWidgetController {
       .invokeMethod('exportXfdf', <String, String>{'xfdfPath': xfdfPath});
 
   @override
+  Future<bool?> showAddPageView(String filePath) async => _channel
+      .invokeMethod('showAddPageView', <String, String>{'filePath': filePath});
+
+  @override
   Future<bool?> save() async => _channel.invokeMethod('save');
 
   @override

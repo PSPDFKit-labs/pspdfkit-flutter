@@ -35,15 +35,9 @@
         PSPDFProcessor *pdfProcessor = [[PSPDFProcessor alloc] initWithConfiguration:processorConfig securityOptions:nil];
         
         if (weakSelf.filePath != nil) {
-            NSURL *url = [NSURL fileURLWithPath:weakSelf.filePath];
-            NSString *path = url.absoluteString;
-            
-            NSFileManager *fileManager = [NSFileManager defaultManager];
-            [fileManager removeItemAtPath:path error:nil];
-            
-            BOOL result = [pdfProcessor writeToFileURL:url error:nil];
+            BOOL result = [pdfProcessor writeToFileURL:weakSelf.filePath error:nil];
             if (result) {
-                weakSelf.pdfViewController.document = [[PSPDFDocument alloc] initWithURL:url];
+                weakSelf.pdfViewController.document = [[PSPDFDocument alloc] initWithURL:weakSelf.filePath];
             }
         }
         [controller dismissViewControllerAnimated:YES completion:nil];

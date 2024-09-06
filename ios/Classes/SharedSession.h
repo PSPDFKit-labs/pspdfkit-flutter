@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedInstance;
 
 @property (nonatomic, strong) PSPDFViewController *pdfViewController;
-@property (nonatomic, strong) NSString *filePath;
+@property (nonatomic, strong) NSURL *filePath;
 
 @end
 

@@ -134,6 +134,10 @@ class Pspdfkit {
   static Future<bool?> exportXfdf(String xfdfPath) async =>
       PspdfkitFlutterPlatform.instance.exportXfdf(xfdfPath);
 
+  /// Opens an "Add Page" view to create a new template.
+  static Future<bool?> showAddPageView(String filePath) async =>
+      PspdfkitFlutterPlatform.instance.showAddPageView(filePath);
+
   /// Saves the document back to its original location if it has been changed.
   /// If there were no changes to the document, the document file will not be modified.
   static Future<bool?> save() async => PspdfkitFlutterPlatform.instance.save();

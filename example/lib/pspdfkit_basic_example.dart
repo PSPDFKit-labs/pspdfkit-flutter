@@ -11,27 +11,60 @@ import 'package:flutter/material.dart';
 import 'utils/platform_utils.dart';
 import 'package:pspdfkit_flutter/pspdfkit.dart';
 
-class PspdfkitBasicExample extends StatelessWidget {
+class PspdfkitBasicExample extends StatefulWidget {
+  
   final String documentPath;
 
-  const PspdfkitBasicExample({super.key, required this.documentPath});
+  const PspdfkitBasicExample(
+      {Key? key, required this.documentPath})
+      : super(key: key);
+
+  @override
+  _PspdfkitBasicExampleState createState() =>
+      _PspdfkitBasicExampleState();
+}
+
+class _PspdfkitBasicExampleState extends State<PspdfkitBasicExample> {
+late PspdfkitWidgetController pspdfkitWidgetController;
+
+  Future<String> getExportPath(String assetPath) async {
+    final tempDir = await Pspdfkit.getTemporaryDirectory();
+    final tempDocumentPath = '${tempDir.path}/$assetPath';
+    return tempDocumentPath;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        extendBodyBehindAppBar: PlatformUtils.isAndroid(),
-        // Do not resize the the document view on Android or
-        // it won't be rendered correctly when filling forms.
-        resizeToAvoidBottomInset: PlatformUtils.isIOS(),
-        appBar: AppBar(),
-        body: SafeArea(
-            top: false,
-            bottom: false,
-            child: Container(
-                padding: PlatformUtils.isAndroid()
-                    ? const EdgeInsets.only(top: kToolbarHeight)
-                    : null,
-                child: PspdfkitWidget(
-                  documentPath: documentPath,
-                ))));
+          extendBodyBehindAppBar: PlatformUtils.isAndroid(),
+          appBar: AppBar(),
+          body: SafeArea(
+              top: false,
+              bottom: false,
+              child: Container(
+                  padding: PlatformUtils.isAndroid()
+                      ? const EdgeInsets.only(top: kToolbarHeight)
+                      : null,
+                  child: Column(children: <Widget>[
+                    Expanded(
+                      child: PspdfkitWidget(
+                        documentPath: widget.documentPath,
+                        onPspdfkitWidgetCreated: (controller) {
+                          pspdfkitWidgetController = controller;
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                        child: Column(children: <Widget>[
+                      ElevatedButton(
+                          onPressed: () async {
+                          final newDocumentPath = await getExportPath(
+                                'PDFs/Embedded/new_pdf_document_template.pdf');
+                            await pspdfkitWidgetController.showAddPageView(
+                                newDocumentPath);
+                          },
+                          child: const Text('Add Page'))
+                    ]))
+                  ]))));;
   }
 }

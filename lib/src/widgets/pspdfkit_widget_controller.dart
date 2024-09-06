@@ -53,6 +53,9 @@ abstract class PspdfkitWidgetController {
   /// Exports annotations to the XFDF file at the given path.
   Future<bool?> exportXfdf(String xfdfPath);
 
+  /// Opens an "Add Page" view to create a new template.
+  Future<bool?> showAddPageView(String filePath);
+
   /// Saves the document back to its original location if it has been changed.
   /// If there were no changes to the document, the document file will not be modified.
   Future<bool?> save();

@@ -215,7 +215,8 @@
         PSPDFNewPageViewController *newPageViewController = [[PSPDFNewPageViewController alloc] initWithDocumentEditorConfiguration:documentEditorConfiguration];
         newPageViewController.delegate = [SharedSession sharedInstance];
         [[SharedSession sharedInstance] setPdfViewController:pdfViewController];
-        [[SharedSession sharedInstance] setFilePath:filePath];
+        NSURL *newTemplatePath = [PspdfkitFlutterHelper writableFileURLWithPath:filePath override:YES copyIfNeeded:NO];
+        [[SharedSession sharedInstance] setFilePath:newTemplatePath];
         
         dispatch_async(dispatch_get_main_queue(), ^{
             UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:newPageViewController];
