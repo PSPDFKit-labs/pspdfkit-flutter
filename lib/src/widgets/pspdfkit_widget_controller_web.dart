@@ -121,4 +121,10 @@ class PspdfkitWidgetControllerWeb extends PspdfkitWidgetController {
   Future<double> getZoomScale(int pageIndex) {
     return pspdfkitInstance.getZoomScale(pageIndex);
   }
+
+  @override
+  Future getFormFieldProperties(String fullyQualifiedName) {
+    // TODO: implement getFormFieldPRoperties
+    throw UnimplementedError();
+  }
 }

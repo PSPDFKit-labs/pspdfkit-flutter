@@ -85,7 +85,7 @@ class _PspdfkitFormExampleWidgetState extends State<PspdfkitFormExampleWidget> {
                               ElevatedButton(
                                   onPressed: () async {
                                     await view
-                                        .getFormFieldValue('Name_Last')
+                                        .getFormFieldProperties('Birthdate')
                                         .then((formFieldValue) async {
                                       await showDialog<AlertDialog>(
                                           context: context,
@@ -93,8 +93,9 @@ class _PspdfkitFormExampleWidgetState extends State<PspdfkitFormExampleWidget> {
                                               AlertDialog(
                                                 title: const Text(
                                                     'Form Field Value'),
-                                                content:
-                                                    Text(formFieldValue ?? ''),
+                                                content: Text(formFieldValue
+                                                        ?.toString() ??
+                                                    ''),
                                                 actions: [
                                                   TextButton(
                                                       onPressed: () {

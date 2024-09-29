@@ -169,4 +169,10 @@ class PspdfkitWidgetControllerNative extends PspdfkitWidgetController {
       throw Exception('Error getting zoom scale: $error');
     });
   }
+
+  @override
+  Future getFormFieldProperties(String fullyQualifiedName) {
+    return _channel.invokeMethod('getFormFieldProperties',
+        <String, dynamic>{'fullyQualifiedName': fullyQualifiedName});
+  }
 }
