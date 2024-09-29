@@ -36,6 +36,9 @@
     } else if ([@"getFormFieldValue" isEqualToString:call.method]) {
         NSString *fullyQualifiedName = call.arguments[@"fullyQualifiedName"];
         result([PspdfkitFlutterHelper getFormFieldValueForFieldWithFullyQualifiedName:fullyQualifiedName forViewController:pdfViewController]);
+    } else if([@"getFormFieldProperties" isEqualToString:call.method]){
+        NSString *fullyQualifiedName = call.arguments[@"fullyQualifiedName"];
+        result([PspdfkitFlutterHelper getFormFieldPropertiesWithFullyQualifiedName:fullyQualifiedName forViewControlelr:pdfViewController]);
     } else if ([@"applyInstantJson" isEqualToString:call.method]) {
         NSString *annotationsJson = call.arguments[@"annotationsJson"];
         if (annotationsJson.length == 0) {
@@ -451,6 +454,37 @@
     }
 
     return formFieldValue;
+}
+
++(id) getFormFieldPropertiesWithFullyQualifiedName:(NSString *) fullyQualifiedName forViewControlelr: (PSPDFViewController *) pdfViewController {
+    
+    if (fullyQualifiedName == nil || fullyQualifiedName.length == 0) {
+        FlutterError *error = [FlutterError errorWithCode:@"" message:@"Fully qualified name may not be nil or empty." details:nil];
+        return error;
+    }
+    
+    PSPDFDocument *document = pdfViewController.document;
+    PSPDFAnnotation *annotation = nil;
+    
+    for (PSPDFFormElement *formElement in document.formParser.forms) {
+        if ([formElement.fullyQualifiedFieldName isEqualToString:fullyQualifiedName]) {
+            annotation = formElement.formField.annotations.firstObject;
+            break;
+        }
+    }
+    
+    if (annotation == nil ){
+        FlutterError *error = [FlutterError errorWithCode:@"" message:[NSString stringWithFormat:@"Error while searching for a form element with name %@.", fullyQualifiedName] details:nil];
+        return error;
+    }
+    
+    NSError *error = nil;
+    NSData *annotationData = [annotation generateInstantJSONWithError:&error];
+    NSDictionary <NSString *, NSString *> *uuidDict = @{@"uuid" : annotation.uuid};
+    NSMutableDictionary *annotationDictionary = [[NSJSONSerialization JSONObjectWithData:annotationData options:kNilOptions error:NULL] mutableCopy];
+    [annotationDictionary addEntriesFromDictionary:uuidDict];
+    
+    return  annotationDictionary;
 }
 
 # pragma mark - Annotation Processing

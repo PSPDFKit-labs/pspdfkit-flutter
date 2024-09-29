@@ -19,6 +19,8 @@ abstract class PspdfkitWidgetController {
   /// Gets the form field value by specifying its fully qualified name.
   Future<String?> getFormFieldValue(String fullyQualifiedName);
 
+  Future<dynamic> getFormFieldProperties(String fullyQualifiedName);
+
   /// Applies Instant document JSON to the presented document.
   Future<bool?> applyInstantJson(String annotationsJson);
 
