@@ -35,7 +35,21 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
         }
         pspdfkitWidgetCallbacks?.onPageChanged(documentId:document.uid , pageIndex: Int64(pageIndex)){ _ in }
     }
-        
+    
+    public func pdfViewController(_ sender: PDFViewController, menuForText glyphs: GlyphSequence, onPageView pageView: PDFPageView, appearance: EditMenuAppearance, suggestedMenu: UIMenu) -> UIMenu {
+        return UIMenu(
+            title: "Custom Menu",
+            image: nil,
+            identifier: nil,
+            options: .displayInline,
+            children: [
+                UIAction(title: "Custom Action", image: nil, identifier: nil, discoverabilityTitle: nil, attributes: [], state: .off, handler: { _ in
+                    print("Custom Action")
+                })
+                ]
+            )
+    }
+    
     func setFormFieldValue(value: String, fullyQualifiedName: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
         do {
             guard let document = pdfViewController?.document, document.isValid else {
