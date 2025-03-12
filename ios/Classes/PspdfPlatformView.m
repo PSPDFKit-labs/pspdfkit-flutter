@@ -43,7 +43,11 @@
         _navigationController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         _navigationController.view.frame = frame;
         _platformViewImpl = [[PspdfkitPlatformViewImpl alloc] init];
-        [_platformViewImpl registerWithBinaryMessenger:messenger viewId:[NSString stringWithFormat:@"%lld",viewId]];
+        
+        // Get the list of custom toolbar items as an array of dictionaries
+        NSArray<NSDictionary *> *customToolbarItems = args[@"customToolbarItems"];
+
+        [_platformViewImpl registerWithBinaryMessenger:messenger viewId:[NSString stringWithFormat:@"%lld",viewId] customToolbarItems: customToolbarItems];
         
         // View controller containment
         _flutterViewController = [UIApplication sharedApplication].delegate.window.rootViewController;

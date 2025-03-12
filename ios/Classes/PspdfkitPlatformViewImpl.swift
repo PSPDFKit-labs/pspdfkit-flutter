@@ -15,8 +15,10 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
 
     private var pdfViewController: PDFViewController? = nil;
     private var pspdfkitWidgetCallbacks: PspdfkitWidgetCallbacks? = nil;
+    private var customToolbarCallbacks: CustomToolbarCallbacks? = nil;
     private var viewId: String? = nil;
     private var eventsHelper: FlutterEventsHelper? = nil;
+    private var customToolbarItems: [[String: Any]] = []
 
     @objc public func setViewController(controller: PDFViewController){
         self.pdfViewController = controller
@@ -24,6 +26,7 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
         
         // Set the host view for the annotation toolbar controller
         controller.annotationToolbarController?.updateHostView(nil, container: nil, viewController: controller)
+        CustomToolbarHelper.setupCustomToolbarItems(for: pdfViewController!, customToolbarItems:customToolbarItems, callbacks: customToolbarCallbacks)
     }
     
     public func pdfViewController(_ pdfController: PDFViewController, didChange document: Document?) {
@@ -345,9 +348,10 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
           }
     }
     
-    @objc public func register( binaryMessenger: FlutterBinaryMessenger, viewId: String){
+    @objc public func register( binaryMessenger: FlutterBinaryMessenger, viewId: String, customToolbarItems: [[String: Any]]){
         self.viewId = viewId
         pspdfkitWidgetCallbacks = PspdfkitWidgetCallbacks(binaryMessenger: binaryMessenger, messageChannelSuffix: "widget.callbacks.\(viewId)")
+        customToolbarCallbacks = CustomToolbarCallbacks(binaryMessenger: binaryMessenger, messageChannelSuffix: "customToolbar.callbacks.\(viewId)")
         PspdfkitWidgetControllerApiSetup.setUp(binaryMessenger: binaryMessenger, api: self, messageChannelSuffix:viewId)
         let nutreintEventCallback: NutrientEventsCallbacks = NutrientEventsCallbacks(binaryMessenger: binaryMessenger, messageChannelSuffix: "events.callbacks.\(viewId)")
         eventsHelper = FlutterEventsHelper(nutrientCallback: nutreintEventCallback)
@@ -355,11 +359,13 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
                                                selector: #selector(spreadIndexDidChange(_:)),
                                                name: .PSPDFDocumentViewControllerSpreadIndexDidChange,
                                                object: nil)
+        self.customToolbarItems = customToolbarItems
     }
     
     @objc public func unRegister(binaryMessenger: FlutterBinaryMessenger){
         NotificationCenter.default.removeObserver(self)
         pspdfkitWidgetCallbacks = nil
+        customToolbarCallbacks = nil
         PspdfkitWidgetControllerApiSetup.setUp(binaryMessenger: binaryMessenger, api: nil, messageChannelSuffix: viewId ?? "")
         
         if eventsHelper != nil {
