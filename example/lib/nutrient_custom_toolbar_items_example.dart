@@ -17,7 +17,6 @@ class NutrientCustomToolbarItemsExample extends StatefulWidget {
 class _NutrientCustomToolbarItemsExampleState
     extends State<NutrientCustomToolbarItemsExample> {
   PspdfkitWidgetController? _pspdfkitWidgetController;
-  PdfDocument? _pdfDocument;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +38,7 @@ class _NutrientCustomToolbarItemsExampleState
                 child: PspdfkitWidget(
                     customToolbarItems: [
                       CustomToolbarItem(
-                        title: 'Save',
+                        title: 'Image',
                         identifier: 'custom-toolbar-item',
                         iconColor: "#000000",
                         iconName: "toolbar_item",
@@ -61,11 +60,9 @@ class _NutrientCustomToolbarItemsExampleState
                       switch (identifier) {
                         case 'custom-toolbar-item':
                           {
-                            _pdfDocument?.save();
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(const SnackBar(
-                              content: Text('Document saved'),
-                            ));
+                            _pspdfkitWidgetController
+                                ?.enterAnnotationCreationMode(
+                                    AnnotationTool.image);
                           }
                           break;
                         case 'custom-toolbar-item-2':
@@ -81,11 +78,6 @@ class _NutrientCustomToolbarItemsExampleState
                       }
                     },
                     documentPath: widget.documentPath,
-                    onPdfDocumentLoaded: (document) {
-                      setState(() {
-                        _pdfDocument = document;
-                      });
-                    },
                     onPspdfkitWidgetCreated: (view) {
                       setState(() {
                         _pspdfkitWidgetController = view;

@@ -286,17 +286,37 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
         
         do {
             if let annotationTool = annotationTool {
-                // Get the Flutter tool name
-                
                 // Use AnnotationHelper to map the Flutter tool to iOS tool
                 if let toolWithVariant = AnnotationHelper.getIOSAnnotationToolWithVariantFromFlutterName(annotationTool) {
                     // Set the annotation tool
                     if pdfViewController.annotationToolbarController?.isToolbarVisible == false {
                         pdfViewController.annotationToolbarController?.showToolbar(animated: true)
                     }
-                    pdfViewController.annotationStateManager.toggleState(toolWithVariant.annotationTool, variant: toolWithVariant.variant)
-                    // Ensure the annotation toolbar is visible
-                    completion(.success(true))
+                    
+                    // Handle special cases for tools that need to show pickers or dialogs
+                    if toolWithVariant.annotationTool == .stamp {
+                        // Show the stamp picker
+//                        pdfViewController.annotationStateManager.setState(toolWithVariant.annotationTool, variant: toolWithVariant.variant)
+                        pdfViewController.annotationStateManager.toggleStampController(nil)
+                        // The stamp picker will be shown automatically when the tool is selected
+                        completion(.success(true))
+                    } else if toolWithVariant.annotationTool == .image {
+                        // For image tool, we need to use the annotation state manager to trigger the image picker
+//                        pdfViewController.annotationStateManager.setState(toolWithVariant.annotationTool, variant: toolWithVariant.variant)
+                        pdfViewController.annotationStateManager.toggleImagePickerController(nil)
+                        // The image picker will be shown automatically when the tool is selected
+                        completion(.success(true))
+                    } else if toolWithVariant.annotationTool == .signature {
+                        // For signature tool, we need to use the annotation state manager to trigger the signature controller
+//                        pdfViewController.annotationStateManager.setState(toolWithVariant.annotationTool, variant: toolWithVariant.variant)
+                        pdfViewController.annotationStateManager.toggleSignatureController(nil)
+                        // The signature dialog will be shown automatically when the tool is selected
+                        completion(.success(true))
+                    } else {
+                        // For all other annotation tools, just toggle the state
+                        pdfViewController.annotationStateManager.toggleState(toolWithVariant.annotationTool, variant: toolWithVariant.variant)
+                        completion(.success(true))
+                    }
                 } else {
                     // Default to ink pen if the tool is not supported
                     let defaultTool = AnnotationToolWithVariant(annotationTool: .ink, variant: nil)
@@ -304,7 +324,6 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
                         pdfViewController.annotationToolbarController?.showToolbar(animated: true)
                     }
                     pdfViewController.annotationStateManager.toggleState(defaultTool.annotationTool, variant: defaultTool.variant)
-                    // Ensure the annotation toolbar is visible
                     completion(.success(true))
                 }
             } else {
