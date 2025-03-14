@@ -29,6 +29,7 @@ import com.pspdfkit.configuration.page.PageScrollMode;
 import com.pspdfkit.configuration.search.SearchType;
 import com.pspdfkit.configuration.settings.SettingsMenuItemType;
 import com.pspdfkit.configuration.sharing.ShareFeatures;
+import com.pspdfkit.configuration.signatures.SignatureSavingStrategy;
 import com.pspdfkit.configuration.theming.ThemeMode;
 import com.pspdfkit.preferences.PSPDFKitPreferences;
 import com.pspdfkit.ui.special_mode.controller.AnnotationTool;
@@ -858,6 +859,9 @@ class ConfigurationAdapter {
             this.configuration
                     .enabledAnnotationTools(annotationTools);
         }
+        //https://www.nutrient.io/guides/android/signatures/signature-storage/
+        // Configure to save the signature if it is selected. You can also configure it to always save or never save.
+        configuration.signatureSavingStrategy(SignatureSavingStrategy.SAVE_IF_SELECTED);
         return configuration.build();
     }
 }

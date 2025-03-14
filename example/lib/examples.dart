@@ -17,6 +17,7 @@ import 'package:pspdfkit_example/models/papsdkit_example_item.dart';
 import 'package:pspdfkit_example/pspdfkit_toolbar_customization.dart';
 
 import 'instant_collaboration_web.dart';
+import 'nutrient_custom_toolbar_items_example.dart';
 import 'pspdfkit_annotation_preset_customisation.dart';
 import 'pspdfkit_document_example.dart';
 import 'pspdfkit_event_listeners_example.dart';
@@ -185,6 +186,16 @@ List<PspdfkitExampleItem> examples(BuildContext context) => [
           onTap: () async {
             await extractAsset(context, _documentPath).then((value) => goTo(
                 PspdfkitToolbarCustomization(
+                  documentPath: value.path,
+                ),
+                context));
+          }),
+      PspdfkitExampleItem(
+          title: 'Custom Toolbar Items',
+          description: 'Shows how to add custom toolbar items to PDF view.',
+          onTap: () async {
+            await extractAsset(context, _documentPath).then((value) => goTo(
+                NutrientCustomToolbarItemsExample(
                   documentPath: value.path,
                 ),
                 context));
