@@ -39,6 +39,20 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
         eventsHelper?.annotationSelected(annotations: annotations)
     }
     
+    public func pdfViewController(_ sender: PDFViewController, menuForText glyphs: GlyphSequence, onPageView pageView: PDFPageView, appearance: EditMenuAppearance, suggestedMenu: UIMenu) -> UIMenu {
+        return UIMenu(
+            title: "Custom Menu",
+            image: nil,
+            identifier: nil,
+            options: .displayInline,
+            children: [
+                UIAction(title: "Custom Action", image: nil, identifier: nil, discoverabilityTitle: nil, attributes: [], state: .off, handler: { _ in
+                    print("Custom Action")
+                })
+                ]
+            )
+    }
+    
     public func pdfViewController(_ pdfController: PDFViewController, didDeselect annotations: [Annotation], on pageView: PDFPageView) {
         // Call the event helper to notify the listeners.
         eventsHelper?.annotationDeselected(annotations: annotations)
