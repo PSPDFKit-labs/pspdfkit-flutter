@@ -1,21 +1,30 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pspdfkit_flutter/pspdfkit.dart';
 import '../document/pdf_document_native.dart';
 
 class PspdfkitFlutterWidgetControllerImpl
-    implements PspdfkitWidgetController, PspdfkitWidgetCallbacks {
+    implements
+        PspdfkitWidgetController,
+        PspdfkitWidgetCallbacks,
+        NutrientEventsCallbacks {
   final PspdfkitWidgetControllerApi _pspdfkitWidgetControllerApi;
   final PdfDocumentLoadedCallback? onPdfDocumentLoaded;
   final PdfDocumentLoadFailedCallback? onPdfDocumentLoadFailed;
   final PageChangedCallback? onPdfPageChanged;
+  final PdfDocumentSavedCallback? onPdfDocumentSaved;
+  final PageClickedCallback? onPageClicked;
+  final Map<NutrientEvent, Function(dynamic eventData)> _eventListeners = {};
 
   PspdfkitFlutterWidgetControllerImpl(
     this._pspdfkitWidgetControllerApi, {
     this.onPdfDocumentLoaded,
     this.onPdfDocumentLoadFailed,
     this.onPdfPageChanged,
+    this.onPdfDocumentSaved,
+    this.onPageClicked,
   });
 
   @override
@@ -26,8 +35,15 @@ class PspdfkitFlutterWidgetControllerImpl
 
   @override
   Future<void> addEventListener(
-      String eventName, Function(dynamic p1) callback) {
-    throw UnimplementedError();
+      NutrientEvent event, Function(dynamic eventData) callback) {
+    _eventListeners[event] = callback;
+    return _pspdfkitWidgetControllerApi.addEventListener(event);
+  }
+
+  @override
+  Future<void> removeEventListener(NutrientEvent event) {
+    _eventListeners.remove(event);
+    return _pspdfkitWidgetControllerApi.removeEventListener(event);
   }
 
   @override
@@ -99,8 +115,7 @@ class PspdfkitFlutterWidgetControllerImpl
     var config = configurations.map((key, value) {
       return MapEntry(key.name, value.toMap());
     });
-    return _pspdfkitWidgetControllerApi.setAnnotationConfigurations(
-        config.cast<String, Map<String, Object>>());
+    return _pspdfkitWidgetControllerApi.setAnnotationConfigurations(config);
   }
 
   @override
@@ -117,6 +132,17 @@ class PspdfkitFlutterWidgetControllerImpl
             x: rect.left, y: rect.top, width: rect.width, height: rect.height),
         null,
         null);
+  }
+
+  @override
+  Future<bool?> enterAnnotationCreationMode([AnnotationTool? annotationTool]) {
+    return _pspdfkitWidgetControllerApi
+        .enterAnnotationCreationMode(annotationTool);
+  }
+
+  @override
+  Future<bool?> exitAnnotationCreationMode() {
+    return _pspdfkitWidgetControllerApi.exitAnnotationCreationMode();
   }
 
   @override
@@ -138,5 +164,131 @@ class PspdfkitFlutterWidgetControllerImpl
   @override
   void onPageChanged(String documentId, int pageIndex) {
     onPdfPageChanged?.call(pageIndex);
+  }
+
+  @override
+  void onPageClick(
+      String documentId, int pageIndex, PointF? point, Object? annotation) {
+    onPageClicked?.call(documentId, pageIndex, point, annotation);
+  }
+
+  @override
+  void onEvent(NutrientEvent event, Object? data) {
+    if (_eventListeners.containsKey(event)) {
+      // Convert annotation data to Annotation objects for annotation-related events
+      if (data is Map &&
+          (event == NutrientEvent.annotationsCreated ||
+              event == NutrientEvent.annotationsUpdated ||
+              event == NutrientEvent.annotationsSelected ||
+              event == NutrientEvent.annotationsDeselected ||
+              event == NutrientEvent.annotationsDeleted)) {
+        try {
+          // Process annotations data
+          if (data.containsKey('annotations')) {
+            var annotations = <Annotation>[];
+            var annotationsJson = data['annotations'];
+
+            // Handle String JSON case
+            if (annotationsJson is String) {
+              try {
+                annotationsJson = jsonDecode(annotationsJson);
+              } catch (e) {
+                if (kDebugMode) {
+                  print('Error decoding annotations JSON string: $e');
+                }
+              }
+            }
+
+            if (annotationsJson is List) {
+              // Convert each annotation JSON to an Annotation object
+              for (var annotationJson in annotationsJson) {
+                try {
+                  // Handle String JSON case for individual annotations
+                  if (annotationJson is String) {
+                    try {
+                      annotationJson = jsonDecode(annotationJson);
+                    } catch (e) {
+                      if (kDebugMode) {
+                        print('Error decoding annotation JSON string: $e');
+                      }
+                      continue;
+                    }
+                  }
+
+                  if (annotationJson is Map) {
+                    final safeMap = <String, dynamic>{};
+
+                    // Convert all keys to strings
+                    annotationJson.forEach((key, value) {
+                      safeMap[key.toString()] = value;
+                    });
+
+                    // Now create the Annotation
+                    annotations.add(Annotation.fromJson(safeMap));
+                  }
+                } catch (e) {
+                  if (kDebugMode) {
+                    print('Error converting annotation JSON to Annotation: $e');
+                  }
+                }
+              }
+
+              // Replace JSON data with Annotation objects
+              if (annotations.length > 1) {
+                data = {'annotations': annotations};
+              } else if (annotations.length == 1) {
+                data = {'annotation': annotations[0]};
+              } else {
+                data = {};
+              }
+            }
+          } else if (data.containsKey('annotation')) {
+            // Handle single annotation case
+            var annotationJson = data['annotation'];
+
+            // Handle String JSON case
+            if (annotationJson is String) {
+              try {
+                annotationJson = jsonDecode(annotationJson);
+              } catch (e) {
+                if (kDebugMode) {
+                  print('Error decoding annotation JSON string: $e');
+                }
+              }
+            }
+
+            if (annotationJson is Map) {
+              try {
+                final safeMap = <String, dynamic>{};
+
+                // Convert all keys to strings
+                annotationJson.forEach((key, value) {
+                  safeMap[key.toString()] = value;
+                });
+
+                // Now create the Annotation
+                var annotation = Annotation.fromJson(safeMap);
+                data = {'annotation': annotation};
+              } catch (e) {
+                if (kDebugMode) {
+                  print('Error converting annotation JSON to Annotation: $e');
+                }
+              }
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error processing annotation event: $e');
+          }
+        }
+      }
+
+      _eventListeners[event]?.call(data);
+    }
+  }
+
+  @override
+  void onDocumentSaved(String documentId, String? path) {
+    onPdfDocumentSaved?.call(documentId, path);
   }
 }

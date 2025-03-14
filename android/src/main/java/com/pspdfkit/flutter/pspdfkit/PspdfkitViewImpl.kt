@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 PSPDFKit GmbH. All rights reserved.
+ * Copyright © 2024-2025 PSPDFKit GmbH. All rights reserved.
  * <p>
  * THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
  * AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -15,12 +15,16 @@ import com.pspdfkit.document.processor.PdfProcessor
 import com.pspdfkit.document.processor.PdfProcessor.ProcessorProgress
 import com.pspdfkit.document.processor.PdfProcessorTask
 import com.pspdfkit.flutter.pspdfkit.AnnotationConfigurationAdaptor.Companion.convertAnnotationConfigurations
+import com.pspdfkit.flutter.pspdfkit.annotations.AnnotationUtils
 import com.pspdfkit.flutter.pspdfkit.annotations.FlutterAnnotationPresetConfiguration
 import com.pspdfkit.flutter.pspdfkit.api.AnnotationProcessingMode
+import com.pspdfkit.flutter.pspdfkit.api.AnnotationTool
 import com.pspdfkit.flutter.pspdfkit.api.AnnotationType
+import com.pspdfkit.flutter.pspdfkit.api.NutrientEvent
 import com.pspdfkit.flutter.pspdfkit.api.PdfRect
 import com.pspdfkit.flutter.pspdfkit.api.PspdfkitApiError
 import com.pspdfkit.flutter.pspdfkit.api.PspdfkitWidgetControllerApi
+import com.pspdfkit.flutter.pspdfkit.events.FlutterEventsHelper
 import com.pspdfkit.flutter.pspdfkit.util.DocumentJsonDataProvider
 import com.pspdfkit.flutter.pspdfkit.util.Preconditions.requireNotNullNotEmpty
 import com.pspdfkit.flutter.pspdfkit.util.ProcessorHelper.annotationTypeFromString
@@ -44,6 +48,7 @@ import java.util.Locale
 class PspdfkitViewImpl : PspdfkitWidgetControllerApi {
     private var pdfUiFragment: PdfUiFragment? = null
     private var disposable: Disposable? = null
+    private var eventDispatcher: FlutterEventsHelper? = null
 
     /**
      * Sets the PdfFragment to be used by the controller.
@@ -52,6 +57,10 @@ class PspdfkitViewImpl : PspdfkitWidgetControllerApi {
      */
     fun setPdfFragment(pdfFragment: PdfUiFragment?) {
         this.pdfUiFragment = pdfFragment
+    }
+
+    fun setEventDispatcher(eventDispatcher: FlutterEventsHelper) {
+        this.eventDispatcher = eventDispatcher
     }
 
     /**
@@ -356,12 +365,11 @@ class PspdfkitViewImpl : PspdfkitWidgetControllerApi {
                     callback(Result.success(annotationJsonList))
                 }
             )
-    }
+    }   
 
     override fun getAllUnsavedAnnotations(callback: (Result<Any>) -> Unit) {
         val document = requireNotNull(pdfUiFragment?.pdfFragment?.document)
         val outputStream = ByteArrayOutputStream()
-
         disposable = DocumentJsonFormatter.exportDocumentJsonAsync(document, outputStream)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -438,9 +446,9 @@ class PspdfkitViewImpl : PspdfkitWidgetControllerApi {
             })
     }
 
-    override fun importXfdf(xfdfPath: String, callback: (Result<Boolean>) -> Unit) {
+    override fun importXfdf(xfdfString: String, callback: (Result<Boolean>) -> Unit) {
         val document = requireNotNull(pdfUiFragment?.pdfFragment?.document)
-        val dataProvider = DocumentJsonDataProvider(xfdfPath)
+        val dataProvider = DocumentJsonDataProvider(xfdfString)
         // The async parse method is recommended (so you can easily offload parsing from the UI thread).
         disposable = XfdfFormatter.parseXfdfAsync(document, dataProvider)
             .subscribeOn(Schedulers.io()) // Specify the thread on which to parse XFDF.
@@ -615,6 +623,105 @@ class PspdfkitViewImpl : PspdfkitWidgetControllerApi {
                     )
                 )
             }
+        }
+    }
+
+    override fun addEventListener(event: NutrientEvent) {
+        eventDispatcher?.setEventListener(pdfUiFragment!!, event)
+    }
+
+    override fun removeEventListener(event: NutrientEvent) {
+        eventDispatcher?.removeEventListener(pdfUiFragment!!, event)
+    }
+
+    override fun enterAnnotationCreationMode(
+        annotationTool: AnnotationTool?,
+        callback: (Result<Boolean?>) -> Unit
+    ) {
+        val pdfFragment = pdfUiFragment?.pdfFragment
+        if (pdfFragment == null) {
+            callback(
+                Result.failure(
+                    PspdfkitApiError(
+                        "Error entering annotation creation mode",
+                        "PDF fragment is null"
+                    )
+                )
+            )
+            return
+        }
+
+        try {
+            // Convert the Flutter AnnotationTool to the corresponding Android AnnotationToolWithVariant
+            val toolWithVariant = AnnotationUtils.getAndroidAnnotationToolWithVariantFromFlutterTool(annotationTool)
+
+            if (toolWithVariant != null) {
+                // Enter annotation creation mode with the specific tool and variant
+                val androidTool = toolWithVariant.annotationTool
+                val variant = toolWithVariant.variant
+
+                if (variant != null) {
+                    // If we have both tool and variant, use them together
+                    pdfFragment.enterAnnotationCreationMode(androidTool, variant)
+                } else {
+                    // If we only have the tool, use it without a variant
+                    pdfFragment.enterAnnotationCreationMode(androidTool)
+                }
+                callback(Result.success(true))
+            } else if (annotationTool != null) {
+                // If the tool was provided but couldn't be mapped, return an error
+                callback(
+                    Result.failure(
+                        PspdfkitApiError(
+                            "Invalid annotation tool",
+                            "The annotation tool '$annotationTool' is not supported"
+                        )
+                    )
+                )
+            } else {
+                // If no tool was provided, just enter annotation creation mode with default tool
+                pdfFragment.enterAnnotationCreationMode()
+                callback(Result.success(true))
+            }
+        } catch (e: Exception) {
+            callback(
+                Result.failure(
+                    PspdfkitApiError(
+                        "Error entering annotation creation mode",
+                        e.message ?: "Unknown error"
+                    )
+                )
+            )
+        }
+    }
+
+    override fun exitAnnotationCreationMode(callback: (Result<Boolean?>) -> Unit) {
+        val pdfFragment = pdfUiFragment?.pdfFragment
+        if (pdfFragment == null) {
+            callback(
+                Result.failure(
+                    PspdfkitApiError(
+                        "Error exiting annotation creation mode",
+                        "PDF fragment is null"
+                    )
+                )
+            )
+            return
+        }
+
+        try {
+            // Exit annotation creation mode
+            pdfFragment.exitCurrentlyActiveMode()
+            callback(Result.success(true))
+        } catch (e: Exception) {
+            callback(
+                Result.failure(
+                    PspdfkitApiError(
+                        "Error exiting annotation creation mode",
+                        e.message ?: "Unknown error"
+                    )
+                )
+            )
         }
     }
 }

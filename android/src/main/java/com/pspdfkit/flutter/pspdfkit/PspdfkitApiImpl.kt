@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 PSPDFKit GmbH. All rights reserved.
+ * Copyright © 2024-2025 PSPDFKit GmbH. All rights reserved.
  * <p>
  * THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
  * AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -16,6 +16,7 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.pspdfkit.PSPDFKit
 import com.pspdfkit.PSPDFKit.VERSION
 import com.pspdfkit.PSPDFKit.initialize
 import com.pspdfkit.document.formatters.DocumentJsonFormatter
@@ -31,6 +32,7 @@ import com.pspdfkit.flutter.pspdfkit.api.AndroidPermissionStatus
 import com.pspdfkit.flutter.pspdfkit.api.AnnotationProcessingMode
 import com.pspdfkit.flutter.pspdfkit.api.PspdfkitApi
 import com.pspdfkit.flutter.pspdfkit.api.PspdfkitApiError
+import com.pspdfkit.flutter.pspdfkit.events.FlutterAnalyticsClient
 import com.pspdfkit.flutter.pspdfkit.pdfgeneration.PdfPageAdaptor
 import com.pspdfkit.flutter.pspdfkit.util.DocumentJsonDataProvider
 import com.pspdfkit.flutter.pspdfkit.util.Preconditions
@@ -52,12 +54,13 @@ import com.pspdfkit.instant.ui.InstantPdfActivityIntentBuilder
 import com.pspdfkit.preferences.PSPDFKitPreferences
 import com.pspdfkit.ui.PdfActivity
 import com.pspdfkit.ui.PdfActivityIntentBuilder
-import com.pspdfkit.ui.special_mode.controller.AnnotationTool
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subscribers.DisposableSubscriber
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -66,13 +69,19 @@ import java.nio.charset.StandardCharsets
 class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?) : PspdfkitApi {
 
     private var disposable: Disposable? = null
+    private var analyticsEventClient: FlutterAnalyticsClient? = null
 
     fun dispose() {
         disposable?.dispose()
+        analyticsEventClient = null
     }
 
     fun setActivityPluginBinding(activityPluginBinding: ActivityPluginBinding?) {
         this.activityPluginBinding = activityPluginBinding
+    }
+
+    fun setAnalyticsEventClient(analyticsEventClient: FlutterAnalyticsClient?) {
+        this.analyticsEventClient = analyticsEventClient
     }
 
     override fun getFrameworkVersion(callback: (Result<String?>) -> Unit) {
@@ -139,9 +148,6 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
             val configurationAdapterInstant = ConfigurationAdapter(
                 activityPluginBinding?.activity as FragmentActivity, configurationMapInstant
             )
-            val annotationTools =
-                configurationAdapterInstant.build().configuration.enabledAnnotationTools
-            annotationTools.add(AnnotationTool.INSTANT_COMMENT_MARKER)
             val intentInstant = InstantPdfActivityIntentBuilder.fromInstantDocument(
                 activityPluginBinding?.activity as FragmentActivity, serverUrl, jwt
             ).activityClass(FlutterInstantPdfActivity::class.java)
@@ -344,7 +350,7 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
             })
     }
 
-    override fun addAnnotation(jsonAnnotation: String, callback: (Result<Boolean?>) -> Unit) {
+    override fun addAnnotation(jsonAnnotation: String,attachment:String?, callback: (Result<Boolean?>) -> Unit) {
         checkNotNull(activityPluginBinding) { "ActivityPluginBinding is null" }
         val document = Preconditions.requireDocumentNotNull(
             activityPluginBinding?.activity as PdfActivity, "Pspdfkit.exportInstantJson()"
@@ -379,7 +385,11 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
         callback(Result.success(true))
     }
 
-    override fun getAnnotations(pageIndex: Long, type: String, callback: (Result<Any?>) -> Unit) {
+    override fun getAnnotations(
+        pageIndex: Long,
+        type: String,
+        callback: (Result<Any?>) -> Unit
+    ) {
         checkNotNull(activityPluginBinding) { "ActivityPluginBinding is null" }
         val document = Preconditions.requireDocumentNotNull(
             activityPluginBinding?.activity as PdfActivity, "Pspdfkit.exportInstantJson()"
@@ -409,6 +419,7 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
     }
 
     override fun getAllUnsavedAnnotations(callback: (Result<Any?>) -> Unit) {
+
         checkNotNull(activityPluginBinding) { "ActivityPluginBinding is null" }
         val document = Preconditions.requireDocumentNotNull(
             activityPluginBinding?.activity as PdfActivity, "Pspdfkit.getAllUnsavedAnnotations()"
@@ -429,6 +440,47 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
                     )
                 )
             })
+    }
+
+    override fun updateAnnotation(jsonAnnotation: String, callback: (Result<Unit>) -> Unit) {
+        checkNotNull(activityPluginBinding) { "ActivityPluginBinding is null" }
+        val document = Preconditions.requireDocumentNotNull(
+            activityPluginBinding?.activity as PdfActivity, "Pspdfkit.updateAnnotation()"
+        )
+
+        try {
+            val annotationObject:Map<String, *>  = Json.parseToJsonElement(jsonAnnotation).jsonObject.toMap()
+            //  Remove escaped backslashes from the JSON string.
+            val pageIndex = annotationObject["pageIndex"] as Int
+            val uid = annotationObject["uid"] as String
+
+            val allAnnotations = document.annotationProvider.getAnnotations(pageIndex)
+            val annotation = allAnnotations.firstOrNull { it.uuid == uid }
+            if (annotation == null) {
+                callback(Result.failure(Exception("Annotation not found")))
+                return
+            }
+            document.annotationProvider.removeAnnotationFromPage(annotation)
+            disposable = document.annotationProvider.createAnnotationFromInstantJsonAsync(jsonAnnotation)
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    {
+                        callback(Result.success(Unit))
+                    }
+                ) { throwable ->
+                    callback(
+                        Result.failure(
+                            PspdfkitApiError(
+                                "Error while updating annotation",
+                                throwable.message ?: "",
+                            )
+                        )
+                    )
+                }
+        } catch (e: Exception) {
+            callback(Result.failure(e))
+        }
     }
 
     override fun processAnnotations(
@@ -474,13 +526,13 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
             })
     }
 
-    override fun importXfdf(xfdfPath: String, callback: (Result<Boolean?>) -> Unit) {
+    override fun importXfdf(xfdfString: String, callback: (Result<Boolean?>) -> Unit) {
         checkNotNull(activityPluginBinding) { "ActivityPluginBinding is null" }
         val document = Preconditions.requireDocumentNotNull(
             activityPluginBinding?.activity as PdfActivity, "Pspdfkit.processAnnotations()"
         )
 
-        val dataProvider = DocumentJsonDataProvider(xfdfPath)
+        val dataProvider = DocumentJsonDataProvider(xfdfString)
         // The async parse method is recommended (so you can easily offload parsing from the UI thread).
         disposable = XfdfFormatter.parseXfdfAsync(document, dataProvider)
             .subscribeOn(Schedulers.io()) // Specify the thread on which to parse XFDF.
@@ -633,6 +685,13 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
         callback(Result.success(getTemporaryDirectory(activityPluginBinding?.activity as FragmentActivity)))
     }
 
+    override fun setAuthorName(name: String, callback: (Result<Unit>) -> Unit) {
+        checkNotNull(activityPluginBinding) { "ActivityPluginBinding is null" }
+        PSPDFKitPreferences.get(activityPluginBinding?.activity as FragmentActivity)
+            .setAnnotationCreator(name)
+        callback(Result.success(Unit))
+    }
+
     override fun getAuthorName(callback: (Result<String>) -> Unit) {
         checkNotNull(activityPluginBinding) { "ActivityPluginBinding is null" }
         val authorName =
@@ -745,6 +804,14 @@ class PspdfkitApiImpl(private var activityPluginBinding: ActivityPluginBinding?)
                     // Handle the error.
                     callback(Result.failure(PspdfkitApiError("", throwable.message)))
                 })
+        }
+    }
+
+    override fun enableAnalyticsEvents(enable: Boolean) {
+        if (enable) {
+            analyticsEventClient?.let { PSPDFKit.addAnalyticsClient(it) }
+        } else {
+            analyticsEventClient?.let { PSPDFKit.removeAnalyticsClient(it) }
         }
     }
 

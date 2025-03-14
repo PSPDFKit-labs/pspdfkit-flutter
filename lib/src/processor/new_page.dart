@@ -1,9 +1,8 @@
 import 'package:flutter/rendering.dart';
-
-import 'processor.dart';
+import 'package:pspdfkit_flutter/pspdfkit.dart';
 
 ///
-///  Copyright © 2018-2024 PSPDFKit GmbH. All rights reserved.
+///  Copyright © 2018-2025 PSPDFKit GmbH. All rights reserved.
 ///
 ///  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 ///  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -87,7 +86,7 @@ class NewPage {
   }
 
   /// New page from template.
-  /// [sourceDocumentge] The the [PdfPage] to use for the template.
+  /// [sourceDocument] The the [PdfPage] to use for the template.
   /// [pageSize] The size of the page. Defaults to A4.
   /// [margins] The margins of the page. Defaults to 0.
   /// [rotation] The rotation of the page. Defaults to 0.
@@ -139,7 +138,7 @@ class NewPage {
     }
 
     if (backgroundColor != null) {
-      map['backgroundColor'] = backgroundColor?.value;
+      map['backgroundColor'] = backgroundColor?.toHex();
     }
     return map;
   }

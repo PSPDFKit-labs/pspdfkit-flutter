@@ -1,5 +1,5 @@
 ///
-///  Copyright © 2018-2024 PSPDFKit GmbH. All rights reserved.
+///  Copyright © 2018-2025 PSPDFKit GmbH. All rights reserved.
 ///
 ///  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 ///  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -17,12 +17,10 @@ import '../document/pdf_document_native.dart';
 class PspdfkitWidgetControllerNative extends PspdfkitWidgetController {
   final MethodChannel _channel;
 
-  PspdfkitWidgetControllerNative(
-    this._channel, {
-    PdfDocumentLoadedCallback? onPdfDocumentLoaded,
-    PdfDocumentLoadFailedCallback? onPdfDocumentLoadFailed,
-    PageChangedCallback? onPageChanged,
-  }) {
+  PspdfkitWidgetControllerNative(this._channel,
+      {PdfDocumentLoadedCallback? onPdfDocumentLoaded,
+      PdfDocumentLoadFailedCallback? onPdfDocumentLoadFailed,
+      PageChangedCallback? onPageChanged}) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'onDocumentLoaded':
@@ -92,7 +90,7 @@ class PspdfkitWidgetControllerNative extends PspdfkitWidgetController {
     String destinationPath,
   ) async =>
       _channel.invokeMethod('processAnnotations', <String, String>{
-        'type': type.name,
+        'type': type.fullName,
         'processingMode': processingMode.name,
         'destinationPath': destinationPath
       });
@@ -122,9 +120,16 @@ class PspdfkitWidgetControllerNative extends PspdfkitWidgetController {
   }
 
   @override
-  Future<void> addEventListener(String eventName, Function(dynamic) callback) {
+  Future<void> addEventListener(
+      NutrientEvent event, Function(dynamic) callback) {
     throw UnimplementedError(
         'addEventListener is not yet implemented on this platform');
+  }
+
+  @override
+  Future<void> removeEventListener(NutrientEvent event) {
+    throw UnimplementedError(
+        'removeEventListener is not yet implemented on this platform');
   }
 
   @override
@@ -173,5 +178,18 @@ class PspdfkitWidgetControllerNative extends PspdfkitWidgetController {
     }).catchError((error) {
       throw Exception('Error getting zoom scale: $error');
     });
+  }
+
+  @override
+  Future<bool?> enterAnnotationCreationMode(
+      [AnnotationTool? annotationTool]) async {
+    throw UnimplementedError(
+        'Annotation creation mode is not supported in legacy mode');
+  }
+
+  @override
+  Future<bool?> exitAnnotationCreationMode() async {
+    throw UnimplementedError(
+        'Annotation creation mode is not supported in legacy mode');
   }
 }

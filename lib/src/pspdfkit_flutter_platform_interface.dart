@@ -1,5 +1,5 @@
 ///
-///  Copyright © 2018-2023 PSPDFKit GmbH. All rights reserved.
+///  Copyright © 2018-2025 PSPDFKit GmbH. All rights reserved.
 ///
 ///  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 ///  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -29,6 +29,9 @@ typedef InstantDownloadFailedCallback = void Function(
 
 typedef PspdfkitDocumentLoadedCallback = void Function(String documentId);
 
+typedef AnalyticsEventsListener = void Function(
+    String event, Map<String, dynamic> attributes);
+
 abstract class PspdfkitFlutterPlatform extends PlatformInterface {
   /// Constructs a PspdfkitFlutterPlatform.
   PspdfkitFlutterPlatform() : super(token: _token);
@@ -36,6 +39,7 @@ abstract class PspdfkitFlutterPlatform extends PlatformInterface {
   static final Object _token = Object();
 
   static PspdfkitFlutterPlatform _instance = Pspdfkit.useLegacy
+      // ignore: deprecated_member_use_from_same_package
       ? MethodChannelPspdfkitFlutter()
       : PspdfkitFlutterApiImpl();
 
@@ -91,19 +95,41 @@ abstract class PspdfkitFlutterPlatform extends PlatformInterface {
   /// Exports Instant document JSON from the presented document.
   Future<String?> exportInstantJson();
 
-  /// Adds the given annotation to the presented document.
-  /// `jsonAnnotation` can either be a JSON string or a valid JSON Dictionary (iOS) / HashMap (Android).
-  Future<bool?> addAnnotation(dynamic jsonAnnotation);
+  /// Adds an annotation to the presented document.
+  ///
+  /// This method accepts various types of input:
+  /// - An [Annotation] object (will be converted to JSON using toJson())
+  /// - A JSON string representing an annotation
+  /// - A [Map] representing an annotation (will be converted to JSON)
+  ///
+  /// Returns true if the annotation was successfully added.
+  Future<bool?> addAnnotation(dynamic annotation);
 
-  /// Removes the given annotation from the presented document.
-  /// `jsonAnnotation` can either be a JSON string or a valid JSON Dictionary (iOS) / HashMap (Android).
-  Future<bool?> removeAnnotation(dynamic jsonAnnotation);
+  /// Removes an annotation from the presented document.
+  ///
+  /// This method accepts various types of input:
+  /// - An [Annotation] object (will be converted to JSON using toJson())
+  /// - A JSON string representing an annotation
+  /// - A [Map] representing an annotation (will be converted to JSON)
+  ///
+  /// Returns true if the annotation was successfully removed.
+  Future<bool?> removeAnnotation(dynamic annotation);
 
   /// Returns a list of JSON dictionaries for all the annotations of the given `type` on the given `pageIndex`.
-  Future<dynamic> getAnnotations(int pageIndex, String type);
+  Future<dynamic> getAnnotationsAsJSON(int pageIndex, String type);
+
+  /// Returns a list of annotation models for all the annotations of the given `type` on the given `pageIndex`.
+  Future<List<Annotation>> getAnnotations(int pageIndex, AnnotationType type);
+
+  /// Updates the given annotation in the presented document.
+  Future<bool?> updateAnnotation(Annotation annotation);
 
   /// Returns a list of JSON dictionaries for all the unsaved annotations in the presented document.
+  @Deprecated('Use getUnsavedAnnotations instead')
   Future<dynamic> getAllUnsavedAnnotations();
+
+  /// Returns a list of annotation models for all the unsaved annotations in the presented document.
+  Future<List<Annotation>> getUnsavedAnnotations();
 
   /// Processes annotations of the given type with the provided processing
   /// mode and stores the PDF at the given destination path.
@@ -146,7 +172,7 @@ abstract class PspdfkitFlutterPlatform extends PlatformInterface {
   Future<bool?> setAnnotationPresetConfigurations(
       Map<String, dynamic> configurations);
 
-  //. Generate a PDF from the given HTML string.
+  /// Generate a PDF from the given HTML string.
   /// [html]: The HTML string to be converted to PDF.
   /// [outPutFile]: The path to the output file.
   /// [options]: A map of options that can be used to customize the PDF generation.
@@ -186,6 +212,12 @@ abstract class PspdfkitFlutterPlatform extends PlatformInterface {
   /// provide the directory.
   Future<Directory> getTemporaryDirectory();
 
+  Future<void> enableAnalytics(bool enabled);
+
+  Future<void> setDefaultAuthorName(String authorName);
+
+  Future<String> getAuthorName();
+
   /// onPAuse callback for FlutterPdfActivity
   VoidCallback? flutterPdfActivityOnPause;
 
@@ -221,6 +253,8 @@ abstract class PspdfkitFlutterPlatform extends PlatformInterface {
   /// Only available on iOS.
   /// Called when instant document download fails.
   InstantDownloadFailedCallback? instantDownloadFailed;
+
+  AnalyticsEventsListener? analyticsEventsListener;
 
   /// Gets the annotation author name.
   String get authorName;

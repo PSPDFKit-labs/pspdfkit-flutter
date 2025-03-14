@@ -1,5 +1,5 @@
 //
-//  Copyright © 2024 PSPDFKit GmbH. All rights reserved.
+//  Copyright © 2024-2025 PSPDFKit GmbH. All rights reserved.
 //
 //  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 //  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -8,32 +8,35 @@
 //
 
 import Foundation
+import PSPDFKit
 
 @objc(PspdfkitPlatformViewImpl)
 public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PDFViewControllerDelegate {
-    
+
     private var pdfViewController: PDFViewController? = nil;
     private var pspdfkitWidgetCallbacks: PspdfkitWidgetCallbacks? = nil;
     private var viewId: String? = nil;
-    
+    private var eventsHelper: FlutterEventsHelper? = nil;
+
     @objc public func setViewController(controller: PDFViewController){
         self.pdfViewController = controller
         self.pdfViewController?.delegate = self
+        
+        // Set the host view for the annotation toolbar controller
+        controller.annotationToolbarController?.updateHostView(nil, container: nil, viewController: controller)
     }
     
     public func pdfViewController(_ pdfController: PDFViewController, didChange document: Document?) {
         if document != nil {
             pspdfkitWidgetCallbacks?.onDocumentLoaded(documentId: document!.uid){ _ in }
         } else {
-            pspdfkitWidgetCallbacks?.onDocumentError(documentId: "", error: "Laoding Document failed") {_ in }
+            pspdfkitWidgetCallbacks?.onDocumentError(documentId: "", error: "Loading Document failed") {_ in }
         }
     }
     
-    public func pdfViewController(_ pdfController: PDFViewController, willBeginDisplaying pageView: PDFPageView, forPageAt pageIndex: Int) {
-        guard  let document = pdfViewController?.document else {
-            return
-        }
-        pspdfkitWidgetCallbacks?.onPageChanged(documentId:document.uid , pageIndex: Int64(pageIndex)){ _ in }
+    public func pdfViewController(_ pdfController: PDFViewController, didSelect annotations: [Annotation], on pageView: PDFPageView) {
+        // Call the event helper to notify the listeners.
+        eventsHelper?.annotationSelected(annotations: annotations)
     }
     
     public func pdfViewController(_ sender: PDFViewController, menuForText glyphs: GlyphSequence, onPageView pageView: PDFPageView, appearance: EditMenuAppearance, suggestedMenu: UIMenu) -> UIMenu {
@@ -50,6 +53,38 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
             )
     }
     
+    public func pdfViewController(_ pdfController: PDFViewController, didDeselect annotations: [Annotation], on pageView: PDFPageView) {
+        // Call the event helper to notify the listeners.
+        eventsHelper?.annotationDeselected(annotations: annotations)
+    }
+    
+    public func pdfViewController(_ pdfController: PDFViewController, didSelectText text: String, with glyphs: [Glyph], at rect: CGRect, on pageView: PDFPageView) {
+        // Call the event helper to notify the listeners.
+        eventsHelper?.textSelected(text: text, glyphs: glyphs, rect: rect)
+    }
+    
+    public func pdfViewController(_ pdfController: PDFViewController, didSave document: Document, error: (any Error)?) {
+        if let error = error {
+            pspdfkitWidgetCallbacks?.onDocumentError(documentId: document.uid, error: error.localizedDescription){_ in }
+        } else {
+            pspdfkitWidgetCallbacks?.onDocumentSaved(documentId: document.uid, path: document.fileURL?.absoluteString){_ in }
+        }
+    }
+    
+    public func pdfViewController(_ pdfController: PDFViewController, didConfigurePageView pageView: PDFPageView, forPageAt pageIndex: Int) {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handlePageTap(_:)))
+        pageView.addGestureRecognizer(tapGesture)
+    }
+    
+    @objc func handlePageTap(_ gesture: UITapGestureRecognizer) {
+        if let pageView = gesture.view as? PDFPageView {
+            let location = gesture.location(in: pageView)
+            let point: PointF = PointF(x: Double(Float(location.x)), y: Double(Float(location.y)))
+            let pageIndex = Int64(pageView.pageIndex)
+            pspdfkitWidgetCallbacks?.onPageClick(documentId: pdfViewController?.document?.uid ?? "", pageIndex: pageIndex, point: point, annotation: nil){_ in }
+        }
+    }
+
     func setFormFieldValue(value: String, fullyQualifiedName: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
         do {
             guard let document = pdfViewController?.document, document.isValid else {
@@ -103,7 +138,7 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
         }
     }
     
-    func addAnnotation(jsonAnnotation: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
+    func addAnnotation(annotation jsonAnnotation: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
         do {
             guard let document = pdfViewController?.document, document.isValid else {
                completion(.failure(PspdfkitApiError(code: "", message: "PDF document not found or is invalid.", details: nil)))
@@ -116,7 +151,7 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
         }
     }
     
-    func removeAnnotation(jsonAnnotation: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
+    func removeAnnotation(annotation jsonAnnotation: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
         do {
             guard let document = pdfViewController?.document, document.isValid else {
                completion(.failure(PspdfkitApiError(code: "", message: "PDF document not found or is invalid.", details: nil)))
@@ -246,14 +281,103 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
         pspdfkitWidgetCallbacks?.onDocumentLoaded(documentId: documentId){_ in }
     }
     
+    func addEventListener(event: NutrientEvent) throws {
+        eventsHelper?.setEventListener(event: event)
+    }
+    
+    func removeEventListener(event: NutrientEvent) throws {
+        eventsHelper?.removeEventListener(event: event)
+    }
+       
+    func enterAnnotationCreationMode(annotationTool: AnnotationTool?, completion: @escaping (Result<Bool?, Error>) -> Void) {
+        guard let pdfViewController = pdfViewController else {
+            completion(.failure(PspdfkitApiError(code: "error", message: "PDF view controller is null", details: nil)))
+            return
+        }
+        
+        do {
+            if let annotationTool = annotationTool {
+                // Get the Flutter tool name
+                
+                // Use AnnotationHelper to map the Flutter tool to iOS tool
+                if let toolWithVariant = AnnotationHelper.getIOSAnnotationToolWithVariantFromFlutterName(annotationTool) {
+                    // Set the annotation tool
+                    if pdfViewController.annotationToolbarController?.isToolbarVisible == false {
+                        pdfViewController.annotationToolbarController?.showToolbar(animated: true)
+                    }
+                    pdfViewController.annotationStateManager.toggleState(toolWithVariant.annotationTool, variant: toolWithVariant.variant)
+                    // Ensure the annotation toolbar is visible
+                    completion(.success(true))
+                } else {
+                    // Default to ink pen if the tool is not supported
+                    let defaultTool = AnnotationToolWithVariant(annotationTool: .ink, variant: nil)
+                    if pdfViewController.annotationToolbarController?.isToolbarVisible == false {
+                        pdfViewController.annotationToolbarController?.showToolbar(animated: true)
+                    }
+                    pdfViewController.annotationStateManager.toggleState(defaultTool.annotationTool, variant: defaultTool.variant)
+                    // Ensure the annotation toolbar is visible
+                    completion(.success(true))
+                }
+            } else {
+                // Enter annotation creation mode with default tool (ink pen)
+                let defaultTool = AnnotationToolWithVariant(annotationTool: .ink, variant: nil)
+                if pdfViewController.annotationToolbarController?.isToolbarVisible == false {
+                    pdfViewController.annotationToolbarController?.showToolbar(animated: true)
+                }
+                pdfViewController.annotationStateManager.toggleState(defaultTool.annotationTool, variant: defaultTool.variant)
+                completion(.success(true))
+            }
+        } catch {
+            completion(.failure(PspdfkitApiError(code: "error", message: "Error entering annotation creation mode: \(error.localizedDescription)", details: nil)))
+        }
+    }
+    
+    func exitAnnotationCreationMode(completion: @escaping (Result<Bool?, Error>) -> Void) {
+        guard let pdfViewController = pdfViewController else {
+            completion(.failure(PspdfkitApiError(code: "error", message: "PDF view controller is null", details: nil)))
+            return
+        }
+        
+        do {
+            // Exit annotation creation mode
+            if pdfViewController.annotationToolbarController?.isToolbarVisible == true {
+                pdfViewController.annotationToolbarController?.hideToolbar(animated: true)
+            }
+            pdfViewController.annotationStateManager.setState(nil, variant: nil)
+            completion(.success(true))
+        } catch {
+            completion(.failure(PspdfkitApiError(code: "error", message: "Error exiting annotation creation mode: \(error.localizedDescription)", details: nil)))
+        }
+    }
+
+
+
+    @objc func spreadIndexDidChange(_ notification: Notification) {
+          if let newSpreadIndex = notification.userInfo?["PSPDFDocumentViewControllerSpreadIndexKey"] as? Int,
+            let newPageIndex = self.pdfViewController?.documentViewController?.layout.pageRangeForSpread(at: newSpreadIndex).location {
+              pspdfkitWidgetCallbacks?.onPageChanged(documentId:  self.pdfViewController?.document?.uid ?? "" , pageIndex:Int64(newPageIndex), completion: { _ in })
+          }
+    }
+    
     @objc public func register( binaryMessenger: FlutterBinaryMessenger, viewId: String){
         self.viewId = viewId
         pspdfkitWidgetCallbacks = PspdfkitWidgetCallbacks(binaryMessenger: binaryMessenger, messageChannelSuffix: "widget.callbacks.\(viewId)")
         PspdfkitWidgetControllerApiSetup.setUp(binaryMessenger: binaryMessenger, api: self, messageChannelSuffix:viewId)
+        let nutreintEventCallback: NutrientEventsCallbacks = NutrientEventsCallbacks(binaryMessenger: binaryMessenger, messageChannelSuffix: "events.callbacks.\(viewId)")
+        eventsHelper = FlutterEventsHelper(nutrientCallback: nutreintEventCallback)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(spreadIndexDidChange(_:)),
+                                               name: .PSPDFDocumentViewControllerSpreadIndexDidChange,
+                                               object: nil)
     }
     
     @objc public func unRegister(binaryMessenger: FlutterBinaryMessenger){
+        NotificationCenter.default.removeObserver(self)
         pspdfkitWidgetCallbacks = nil
         PspdfkitWidgetControllerApiSetup.setUp(binaryMessenger: binaryMessenger, api: nil, messageChannelSuffix: viewId ?? "")
+        
+        if eventsHelper != nil {
+            eventsHelper = nil
+        }
     }
 }

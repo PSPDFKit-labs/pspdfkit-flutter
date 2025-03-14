@@ -1,5 +1,5 @@
 /*
-*   Copyright © 2024 PSPDFKit GmbH. All rights reserved.
+*   Copyright © 2024-2025 PSPDFKit GmbH. All rights reserved.
 *
 *   THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 *   AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -13,7 +13,7 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.IdRes
 import androidx.annotation.IntRange
-import com.pspdfkit.flutter.pspdfkit.R
+import com.pspdfkit.R
 import com.pspdfkit.ui.toolbar.ContextualToolbar
 import com.pspdfkit.ui.toolbar.grouping.presets.MenuItem
 import com.pspdfkit.ui.toolbar.grouping.presets.PresetMenuItemGroupingRule

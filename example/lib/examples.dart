@@ -1,11 +1,13 @@
 ///
-///  Copyright © 2024 PSPDFKit GmbH. All rights reserved.
+///  Copyright 2024-2025 PSPDFKit GmbH. All rights reserved.
 ///
 ///  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 ///  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
 ///  UNAUTHORIZED REPRODUCTION OR DISTRIBUTION IS SUBJECT TO CIVIL AND CRIMINAL PENALTIES.
 ///  This notice may not be removed from this file.
 ///
+
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -26,6 +28,7 @@ import 'package:pspdfkit_example/pspdfkit_instant_collaboration_example.dart';
 import 'package:pspdfkit_example/pspdfkit_measurement_tools.dart';
 import 'package:pspdfkit_example/pspdfkit_pdf_generation_example.dart';
 import 'package:pspdfkit_example/pspdfkit_save_as_example.dart';
+import 'package:pspdfkit_example/nutrient_annotation_flags.dart';
 
 import 'package:pspdfkit_flutter/pspdfkit.dart';
 
@@ -36,6 +39,7 @@ import 'pspdfkit_annotations_example.dart';
 import 'pspdfkit_manual_save_example.dart';
 import 'pspdfkit_annotation_processing_example.dart';
 import 'pspdfkit_password_example.dart';
+import 'nutrient_annotation_creation_mode_example.dart';
 
 const String _documentPath = 'PDFs/PSPDFKit.pdf';
 const String _measurementsDocs = 'PDFs/Measurements.pdf';
@@ -104,6 +108,11 @@ List<PspdfkitExampleItem> examples(BuildContext context) => [
             'Programmatically adds and removes annotations using a custom Widget.',
         onTap: () => annotationsExample(context),
       ),
+      PspdfkitExampleItem(
+        title: 'Annotation Flags Example',
+        description: 'Shows how to click an annotation and modify its flags.',
+        onTap: () => annotationFlagsExample(context),
+      ),
       if (!kIsWeb)
         PspdfkitExampleItem(
           title: 'PDF generation',
@@ -144,15 +153,14 @@ List<PspdfkitExampleItem> examples(BuildContext context) => [
               'Opens two different PDF documents simultaneously using two PSPDFKit Widgets.',
           onTap: () => pushTwoPspdfWidgetsSimultaneously(context),
         ),
-      if (kIsWeb)
-        PspdfkitExampleItem(
-            title: 'PSPDFKit Events Listeners',
-            description: 'Shows how to use PSPDFKit Events Listeners.',
-            onTap: () async {
-              await extractAsset(context, _documentPath).then((value) => goTo(
-                  PspdfkitEventListenerExample(documentPath: value.path),
-                  context));
-            }),
+      PspdfkitExampleItem(
+          title: 'PSPDFKit Events Listeners',
+          description: 'Shows how to use PSPDFKit Events Listeners.',
+          onTap: () async {
+            await extractAsset(context, _documentPath).then((value) => goTo(
+                PspdfkitEventListenerExample(documentPath: value.path),
+                context));
+          }),
       PspdfkitExampleItem(
           title: 'Measurement tools',
           description: 'Shows how to use PSPDFKit Measurement tools.',
@@ -194,6 +202,15 @@ List<PspdfkitExampleItem> examples(BuildContext context) => [
             await extractAsset(context, _documentPath).then((value) =>
                 goTo(PspdfkitZoomExample(documentPath: value.path), context));
           }),
+      PspdfkitExampleItem(
+          title: 'Annotation Creation Mode',
+          description: 'Shows how to use annotation creation mode.',
+          onTap: () async {
+            await extractAsset(context, _documentPath).then((value) => goTo(
+                NutrientAnnotationCreationModeExampleWidget(
+                    documentPath: value.path),
+                context));
+          })
     ];
 
 List<PspdfkitExampleItem> globalExamples(BuildContext context) => [
@@ -236,7 +253,7 @@ List<PspdfkitExampleItem> globalExamples(BuildContext context) => [
       ),
       PspdfkitExampleItem(
         title: 'PSPDFKit Instant',
-        description: 'PSPDFKit Instant Synchronisation Example',
+        description: 'PSPDFKit Instant Synchronization Example',
         onTap: () => presentInstant(context),
       ),
       PspdfkitExampleItem(
@@ -392,7 +409,9 @@ void pushTwoPspdfWidgetsSimultaneously(context) async {
       // Support for Android is coming soon.
     }
   } on PlatformException catch (e) {
-    print("Failed to present document: '${e.message}'.");
+    if (kDebugMode) {
+      print("Failed to present document: '${e.message}'.");
+    }
   }
 }
 
@@ -486,19 +505,25 @@ void showFormDocumentExampleGlobal(context) async {
     await Pspdfkit.setFormFieldValue('deselected', 'Sex.1');
     await Pspdfkit.setFormFieldValue('selected', 'HIGH SCHOOL DIPLOMA');
   } on PlatformException catch (e) {
-    print("Failed to set form field values '${e.message}'.");
+    if (kDebugMode) {
+      print("Failed to set form field values '${e.message}'.");
+    }
   }
 
   String? lastName;
   try {
     lastName = await Pspdfkit.getFormFieldValue('Name_Last');
   } on PlatformException catch (e) {
-    print("Failed to get form field value '${e.message}'.");
+    if (kDebugMode) {
+      print("Failed to get form field value '${e.message}'.");
+    }
   }
 
   if (lastName != null) {
-    print(
-        "Retrieved form field for fully qualified name 'Name_Last' is $lastName.");
+    if (kDebugMode) {
+      print(
+          "Retrieved form field for fully qualified name 'Name_Last' is $lastName.");
+    }
   }
 }
 
@@ -513,7 +538,9 @@ void importInstantJsonExampleGlobal(context) async {
   try {
     await Pspdfkit.applyInstantJson(annotationsJson);
   } on PlatformException catch (e) {
-    print("Failed to import Instant Document JSON '${e.message}'.");
+    if (kDebugMode) {
+      print("Failed to import Instant Document JSON '${e.message}'.");
+    }
   }
 }
 
@@ -559,4 +586,11 @@ void showMeasurementExampleGlobal(BuildContext context) {
 void goTo(Widget widget, BuildContext context) {
   Navigator.push<dynamic>(
       context, MaterialPageRoute<dynamic>(builder: (context) => widget));
+}
+
+void annotationFlagsExample(BuildContext context) {
+  goTo(
+    const NutrientAnnotationFlagsExample(),
+    context,
+  );
 }

@@ -1,5 +1,5 @@
 ///
-///  Copyright © 2022-2024 PSPDFKit GmbH. All rights reserved.
+///  Copyright © 2022-2025 PSPDFKit GmbH. All rights reserved.
 ///
 ///  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 ///  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -28,7 +28,7 @@ class PspdfkitManualSaveExampleWidget extends StatefulWidget {
 
 class _PspdfkitManualSaveExampleWidgetState
     extends State<PspdfkitManualSaveExampleWidget> {
-  late PspdfkitWidgetController pspdfkitWidgetController;
+  late PdfDocument document;
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +48,13 @@ class _PspdfkitManualSaveExampleWidgetState
                       child: PspdfkitWidget(
                         documentPath: widget.documentPath,
                         configuration: widget.configuration,
-                        onPspdfkitWidgetCreated: (controller) {
-                          pspdfkitWidgetController = controller;
+                        onPdfDocumentLoaded: (document) {
+                          this.document = document;
+                        },
+                        onPdfDocumentSaved: (documentId, path) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Document saved: $path'),
+                          ));
                         },
                       ),
                     ),
@@ -57,7 +62,7 @@ class _PspdfkitManualSaveExampleWidgetState
                         child: Column(children: <Widget>[
                       ElevatedButton(
                           onPressed: () async {
-                            await pspdfkitWidgetController.save();
+                            await document.save();
                           },
                           child: const Text('Save Document'))
                     ]))

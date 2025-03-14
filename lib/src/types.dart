@@ -1,6 +1,6 @@
 import '../pspdfkit.dart';
 
-///  Copyright © 2023 PSPDFKit GmbH. All rights reserved.
+///  Copyright © 2023-2025 PSPDFKit GmbH. All rights reserved.
 ///
 ///  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 ///  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -253,6 +253,12 @@ typedef PdfDocumentLoadedCallback = void Function(PdfDocument document);
 typedef PdfDocumentLoadFailedCallback = void Function(String error);
 
 typedef PageChangedCallback = void Function(int pageIndex);
+
+typedef PageClickedCallback = void Function(
+    String documentId, int pageIndex, PointF? point, dynamic annotation);
+
+typedef PdfDocumentSavedCallback = void Function(
+    String documentId, String? path);
 
 extension WebShowSignatureValidationStatusMode
     on ShowSignatureValidationStatusMode {

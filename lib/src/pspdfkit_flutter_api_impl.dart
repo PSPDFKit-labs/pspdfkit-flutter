@@ -1,11 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:pspdfkit_flutter/src/document/annotation_json_converter.dart';
 import 'package:pspdfkit_flutter/src/pspdfkit_flutter_platform_interface.dart';
 
 class PspdfkitFlutterApiImpl
-    implements PspdfkitFlutterPlatform, PspdfkitFlutterApiCallbacks {
+    with AnnotationJsonConverter
+    implements
+        PspdfkitFlutterPlatform,
+        PspdfkitFlutterApiCallbacks,
+        AnalyticsEventsCallback {
   late PspdfkitApi _pspdfkitApi = PspdfkitApi();
   PspdfkitFlutterApiImpl() {
     var messageChannel = const MethodChannel('com.pspdfkit.global');
@@ -15,6 +21,10 @@ class PspdfkitFlutterApiImpl
         messageChannelSuffix: 'pspdfkit');
 
     PspdfkitFlutterApiCallbacks.setUp(this,
+        binaryMessenger: messageChannel.binaryMessenger,
+        messageChannelSuffix: 'pspdfkit');
+
+    AnalyticsEventsCallback.setUp(this,
         binaryMessenger: messageChannel.binaryMessenger,
         messageChannelSuffix: 'pspdfkit');
   }
@@ -56,8 +66,20 @@ class PspdfkitFlutterApiImpl
   VoidCallback? pdfViewControllerWillDismiss;
 
   @override
-  Future<bool?> addAnnotation(jsonAnnotation) {
-    return _pspdfkitApi.addAnnotation(jsonAnnotation);
+  AnalyticsEventsListener? analyticsEventsListener;
+
+  @override
+  Future<bool?> addAnnotation(dynamic annotation) async {
+    Map<String, dynamic>? attachment;
+
+    if (annotation is Annotation && annotation is HasAttachment) {
+      attachment = (annotation as HasAttachment).attachment?.toJson();
+    }
+
+    bool? success = await _pspdfkitApi.addAnnotation(
+        convertAnnotationToJson(annotation), jsonEncode(attachment));
+
+    return success;
   }
 
   @override
@@ -92,8 +114,39 @@ class PspdfkitFlutterApiImpl
   }
 
   @override
-  Future getAnnotations(int pageIndex, String type) {
+  Future<List<Annotation>> getUnsavedAnnotations() async {
+    final dynamic result = await _pspdfkitApi.getAllUnsavedAnnotations();
+    if (result is List) {
+      return result
+          .map((dynamic json) =>
+              Annotation.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
+
+  @override
+  Future getAnnotationsAsJSON(int pageIndex, String type) {
     return _pspdfkitApi.getAnnotations(pageIndex, type);
+  }
+
+  @override
+  Future<List<Annotation>> getAnnotations(
+      int pageIndex, AnnotationType type) async {
+    final dynamic result =
+        await _pspdfkitApi.getAnnotations(pageIndex, type.fullName);
+    if (result is List) {
+      return result
+          .map((dynamic json) =>
+              Annotation.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
+
+  @override
+  Future<bool?> updateAnnotation(Annotation annotation) {
+    throw UnimplementedError();
   }
 
   @override
@@ -159,8 +212,12 @@ class PspdfkitFlutterApiImpl
   }
 
   @override
-  Future<bool?> removeAnnotation(jsonAnnotation) {
-    return _pspdfkitApi.removeAnnotation(jsonAnnotation);
+  Future<bool?> removeAnnotation(dynamic annotation) {
+    try {
+      return _pspdfkitApi.removeAnnotation(convertAnnotationToJson(annotation));
+    } catch (e) {
+      throw FormatException('Invalid JSON format: $e');
+    }
   }
 
   @override
@@ -292,5 +349,26 @@ class PspdfkitFlutterApiImpl
       [Map<String, Object?>? options]) {
     return _pspdfkitApi.generatePdfFromHtmlUri(
         htmlUri.toString(), outPutFile, options?.cast<String, Object>());
+  }
+
+  @override
+  Future<void> enableAnalytics(bool enabled) {
+    return _pspdfkitApi.enableAnalyticsEvents(enabled);
+  }
+
+  @override
+  void onEvent(String event, Map<String, Object?>? attributes) {
+    analyticsEventsListener?.call(
+        event, attributes?.cast<String, Object>() ?? {});
+  }
+
+  @override
+  Future<String> getAuthorName() {
+    return _pspdfkitApi.getAuthorName();
+  }
+
+  @override
+  Future<void> setDefaultAuthorName(String authorName) {
+    return _pspdfkitApi.setAuthorName(authorName);
   }
 }

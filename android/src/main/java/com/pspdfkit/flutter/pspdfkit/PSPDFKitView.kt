@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2024 PSPDFKit GmbH. All rights reserved.
+ * Copyright © 2018-2025 PSPDFKit GmbH. All rights reserved.
  * <p>
  * THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
  * AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -26,8 +26,10 @@ import com.pspdfkit.document.processor.PdfProcessor
 import com.pspdfkit.document.processor.PdfProcessor.ProcessorProgress
 import com.pspdfkit.document.processor.PdfProcessorTask
 import com.pspdfkit.flutter.pspdfkit.AnnotationConfigurationAdaptor.Companion.convertAnnotationConfigurations
+import com.pspdfkit.flutter.pspdfkit.api.NutrientEventsCallbacks
 import com.pspdfkit.flutter.pspdfkit.api.PspdfkitWidgetCallbacks
 import com.pspdfkit.flutter.pspdfkit.api.PspdfkitWidgetControllerApi
+import com.pspdfkit.flutter.pspdfkit.events.FlutterEventsHelper
 import com.pspdfkit.flutter.pspdfkit.toolbar.FlutterMenuGroupingRule
 import com.pspdfkit.flutter.pspdfkit.toolbar.FlutterViewModeController
 import com.pspdfkit.flutter.pspdfkit.util.DocumentJsonDataProvider
@@ -70,6 +72,7 @@ internal class PSPDFKitView(
     private val pdfUiFragment: PdfUiFragment
     private var fragmentCallbacks: FlutterPdfUiFragmentCallbacks? = null
     private val pspdfkitViewImpl: PspdfkitViewImpl = PspdfkitViewImpl()
+    private val nutrientEventsCallbacks: NutrientEventsCallbacks = NutrientEventsCallbacks(messenger, "events.callbacks.$id")
     private val widgetCallbacks: PspdfkitWidgetCallbacks =
         PspdfkitWidgetCallbacks(messenger, "widget.callbacks.$id")
 
@@ -171,6 +174,8 @@ internal class PSPDFKitView(
     override fun onFlutterViewAttached(flutterView: View) {
         super.onFlutterViewAttached(flutterView)
         // Set up the method channel for communication with Flutter.
+        val flutterEventsHelper = FlutterEventsHelper(nutrientEventsCallbacks)
+        pspdfkitViewImpl.setEventDispatcher(flutterEventsHelper)
         PspdfkitWidgetControllerApi.setUp(messenger, pspdfkitViewImpl, id.toString())
     }
 

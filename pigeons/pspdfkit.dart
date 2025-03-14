@@ -39,7 +39,7 @@ enum AnnotationType {
   note,
   stamp,
   caret,
-  richMedia,
+  media,
   screen,
   widget,
   file,
@@ -50,7 +50,8 @@ enum AnnotationType {
   watermark,
   trapNet,
   type3d,
-  redact
+  redact,
+  image,
 }
 
 enum AnnotationTool {
@@ -330,16 +331,19 @@ abstract class PspdfkitApi {
   String? exportInstantJson();
 
   @async
-  bool? addAnnotation(String jsonAnnotation);
+  bool? addAnnotation(String annotation, String? attachment);
 
   @async
-  bool? removeAnnotation(String jsonAnnotation);
+  bool? removeAnnotation(String annotation);
 
   @async
   Object? getAnnotations(int pageIndex, String type);
 
   @async
   Object? getAllUnsavedAnnotations();
+
+  @async
+  void updateAnnotation(String annotation);
 
   @async
   bool? processAnnotations(
@@ -382,6 +386,9 @@ abstract class PspdfkitApi {
   String getTemporaryDirectory();
 
   @async
+  void setAuthorName(String name);
+
+  @async
   String getAuthorName();
 
   /// Generate PDF from Images, Template, and Patterns.
@@ -407,6 +414,9 @@ abstract class PspdfkitApi {
   @async
   String? generatePdfFromHtmlUri(
       String htmlUri, String outPutFile, Map<String, Object>? options);
+
+  /// Configure Nutrient Analytics events.
+  void enableAnalyticsEvents(bool enable);
 }
 
 @FlutterApi()
@@ -470,12 +480,12 @@ abstract class PspdfkitWidgetControllerApi {
   /// Adds the given annotation to the presented document.
   /// `jsonAnnotation` can either be a JSON string or a valid JSON Dictionary (iOS) / HashMap (Android).
   @async
-  bool? addAnnotation(String jsonAnnotation);
+  bool? addAnnotation(String annotation);
 
   /// Removes the given annotation from the presented document.
   /// `jsonAnnotation` can either be a JSON string or a valid JSON Dictionary (iOS) / HashMap (Android).
   @async
-  bool? removeAnnotation(String jsonAnnotation);
+  bool? removeAnnotation(String annotation);
 
   /// Returns a list of JSON dictionaries for all the annotations of the given `type` on the given `pageIndex`.
   @async
@@ -535,6 +545,27 @@ abstract class PspdfkitWidgetControllerApi {
   /// Returns a [Future] that completes with the zoom scale of the given page.
   @async
   double getZoomScale(int pageIndex);
+
+  void addEventListener(NutrientEvent event);
+
+  void removeEventListener(NutrientEvent event);
+
+  /// Enters annotation creation mode.
+  ///
+  /// If [annotationTool] is provided, that specific tool will be activated.
+  /// If no tool is provided, the default annotation tool will be used.
+  ///
+  /// Returns a [Future] that completes with a boolean indicating whether
+  /// entering annotation creation mode was successful.
+  @async
+  bool? enterAnnotationCreationMode(AnnotationTool? annotationTool);
+
+  /// Exits annotation creation mode.
+  ///
+  /// Returns a [Future] that completes with a boolean indicating whether
+  /// exiting annotation creation mode was successful.
+  @async
+  bool? exitAnnotationCreationMode();
 }
 
 @HostApi()
@@ -577,7 +608,15 @@ abstract class PdfDocumentApi {
   /// Adds the given annotation to the presented document.
   /// `jsonAnnotation` can either be a JSON string or a valid JSON Dictionary (iOS) / HashMap (Android).
   @async
-  bool? addAnnotation(String jsonAnnotation);
+  bool? addAnnotation(
+    String jsonAnnotation,
+    Object? attachment,
+  );
+
+  /// Updates the given annotation in the presented document.
+  /// `jsonAnnotation` can either be a JSON string or a valid JSON Dictionary (iOS) / HashMap (Android).
+  @async
+  bool? updateAnnotation(String jsonAnnotation);
 
   /// Removes the given annotation from the presented document.
   /// `jsonAnnotation` can either be a JSON string or a valid JSON Dictionary (iOS) / HashMap (Android).
@@ -604,6 +643,10 @@ abstract class PdfDocumentApi {
   /// If there were no changes to the document, the document file will not be modified.
   @async
   bool save(String? outputPath, DocumentSaveOptions? options);
+
+  /// Get the total number of pages in the document.
+  @async
+  int getPageCount();
 }
 
 @FlutterApi()
@@ -613,4 +656,55 @@ abstract class PspdfkitWidgetCallbacks {
   void onDocumentError(String documentId, String error);
 
   void onPageChanged(String documentId, int pageIndex);
+
+  void onPageClick(
+      String documentId, int pageIndex, PointF? point, Object? annotation);
+
+  void onDocumentSaved(String documentId, String? path);
+}
+
+@FlutterApi()
+abstract class NutrientEventsCallbacks {
+  void onEvent(NutrientEvent event, Object? data);
+}
+
+class PointF {
+  final double x;
+  final double y;
+
+  PointF({required this.x, required this.y});
+}
+
+enum NutrientEvent {
+  /// Event triggered when annotations are created.
+  annotationsCreated,
+
+  /// Event triggered when annotations are pressed.
+  annotationsDeselected,
+
+  /// Event triggered when annotations are updated.
+  annotationsUpdated,
+
+  /// Event triggered when annotations are deleted.
+  annotationsDeleted,
+
+  /// Event triggered when annotations are focused.
+  annotationsSelected,
+
+  /// Event triggered when form field values are updated.
+  formFieldValuesUpdated,
+
+  /// Event triggered when form fields are loaded.
+  formFieldSelected,
+
+  /// Event triggered when form fields are about to be saved.
+  formFieldDeselected,
+
+  /// Event triggered when text selection changes.
+  textSelectionChanged,
+}
+
+@FlutterApi()
+abstract class AnalyticsEventsCallback {
+  void onEvent(String event, Map<String, Object?>? attributes);
 }

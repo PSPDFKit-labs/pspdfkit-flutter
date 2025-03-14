@@ -1,5 +1,5 @@
 ///
-///  Copyright © 2022-2024 PSPDFKit GmbH. All rights reserved.
+///  Copyright © 2022-2025 PSPDFKit GmbH. All rights reserved.
 ///
 ///  THIS SOURCE CODE AND ANY ACCOMPANYING DOCUMENTATION ARE PROTECTED BY INTERNATIONAL COPYRIGHT LAW
 ///  AND MAY NOT BE RESOLD OR REDISTRIBUTED. USAGE IS BOUND TO THE PSPDFKIT LICENSE AGREEMENT.
@@ -77,6 +77,7 @@ class _PspdfkitSaveAsExampleWidgetState
                             )
                                 .then((value) async {
                               await showDialog<String>(
+                                // ignore: use_build_context_synchronously
                                 context: context,
                                 builder: (BuildContext context) => AlertDialog(
                                   title: const Text('Document Saved!'),
