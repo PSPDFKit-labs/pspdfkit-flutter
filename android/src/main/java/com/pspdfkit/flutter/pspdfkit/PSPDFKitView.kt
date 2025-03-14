@@ -44,6 +44,8 @@ import com.pspdfkit.forms.ChoiceFormElement
 import com.pspdfkit.forms.EditableButtonFormElement
 import com.pspdfkit.forms.SignatureFormElement
 import com.pspdfkit.forms.TextFormElement
+import com.pspdfkit.signatures.storage.DatabaseSignatureStorage
+import com.pspdfkit.signatures.storage.SignatureStorage
 import com.pspdfkit.ui.PdfFragment
 import com.pspdfkit.ui.PdfUiFragment
 import com.pspdfkit.ui.PdfUiFragmentBuilder

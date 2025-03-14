@@ -20,6 +20,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.flutter.pspdfkit.api.CustomToolbarCallbacks
+import com.pspdfkit.signatures.storage.DatabaseSignatureStorage
+import com.pspdfkit.signatures.storage.SignatureStorage
 import com.pspdfkit.ui.PdfUiFragment
 
 /**
@@ -36,6 +38,11 @@ class FlutterPdfUiFragment : PdfUiFragment() {
         super.onViewCreated(view, savedInstanceState)
         // Enable options menu for the fragment
         setHasOptionsMenu(true)
+        // See guides: https://www.nutrient.io/guides/android/signatures/signature-storage/
+        // Set the signature storage for the PdfFragment.
+        val storage: SignatureStorage = DatabaseSignatureStorage
+            .withName(requireContext(),"MyCoolSignatureDatabase")
+        pdfFragment?.signatureStorage = storage
     }
 
     /**
