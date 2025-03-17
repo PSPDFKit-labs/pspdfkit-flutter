@@ -17,6 +17,7 @@ package com.pspdfkit.flutter.pspdfkit
 ///  This notice may not be removed from this file.
 ///
 import com.pspdfkit.document.PdfDocument
+import com.pspdfkit.flutter.pspdfkit.util.FormFieldMigrationHelper
 import com.pspdfkit.ui.PdfUiFragment
 
 class FlutterPdfUiFragment : PdfUiFragment() {
@@ -25,5 +26,6 @@ class FlutterPdfUiFragment : PdfUiFragment() {
         super.onDocumentLoaded(document)
       // Notify the Flutter PSPDFKit plugin that the document has been loaded.
         EventDispatcher.getInstance().notifyDocumentLoaded(document)
+        FormFieldMigrationHelper.migrateFieldFormatActions(document)
     }
 }
