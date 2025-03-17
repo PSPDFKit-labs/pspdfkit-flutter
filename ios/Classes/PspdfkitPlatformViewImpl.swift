@@ -355,6 +355,17 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
                                                selector: #selector(spreadIndexDidChange(_:)),
                                                name: .PSPDFDocumentViewControllerSpreadIndexDidChange,
                                                object: nil)
+        
+        var stamps = [StampAnnotation]()
+        let stampNames = ["Great!", "Stamp", "Like"]
+
+        for name in stampNames {
+            let stampAnnotation = StampAnnotation(title: name.uppercased())
+            let suggestedSize = stampAnnotation.sizeThatFits(CGSize(width: 200, height: 100))
+            stampAnnotation.boundingBox = CGRect(x: 0, y: 0, width: suggestedSize.width, height: suggestedSize.height)
+            stamps.append(stampAnnotation)
+        }
+        StampViewController.defaultStampAnnotations = stamps
     }
     
     @objc public func unRegister(binaryMessenger: FlutterBinaryMessenger){
