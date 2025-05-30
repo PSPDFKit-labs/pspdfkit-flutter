@@ -115,4 +115,7 @@ abstract class PspdfkitWidgetController {
   /// Returns a [Future] that completes with a boolean indicating whether
   /// exiting annotation creation mode was successful.
   Future<bool?> exitAnnotationCreationMode();
+
+  Future<void> enableAnnotationEditing(
+      {bool enable = true, AnnotationType? annotationType});
 }

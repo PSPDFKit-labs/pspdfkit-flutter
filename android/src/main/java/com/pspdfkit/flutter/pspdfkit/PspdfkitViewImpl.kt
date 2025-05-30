@@ -9,6 +9,8 @@
 package com.pspdfkit.flutter.pspdfkit
 
 import android.graphics.RectF
+import com.pspdfkit.configuration.PdfConfiguration
+import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.document.formatters.DocumentJsonFormatter
 import com.pspdfkit.document.formatters.XfdfFormatter
 import com.pspdfkit.document.processor.PdfProcessor
@@ -722,6 +724,22 @@ class PspdfkitViewImpl : PspdfkitWidgetControllerApi {
                     )
                 )
             )
+        }
+    }
+
+    override fun enableAnnotationEditing(
+        enable: Boolean,
+        annotationType: AnnotationType?,
+        toolName: String?
+    ) {
+        // Create a new PdfActivityConfiguration with the updated annotation editing settings.
+        PdfActivityConfiguration
+        pdfUiFragment?.let {
+            val oldConfig = it.configuration
+            val newConfig = PdfActivityConfiguration.Builder(oldConfig)
+                .annotationEditingEnabled(enable)
+                .build()
+            it.configuration = newConfig
         }
     }
 }

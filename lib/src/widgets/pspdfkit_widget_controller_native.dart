@@ -192,4 +192,11 @@ class PspdfkitWidgetControllerNative extends PspdfkitWidgetController {
     throw UnimplementedError(
         'Annotation creation mode is not supported in legacy mode');
   }
+
+  @override
+  Future<void> enableAnnotationEditing(
+      {bool enable = true, AnnotationType? annotationType}) {
+    // TODO: ignore this method in legacy mode.
+    throw UnimplementedError();
+  }
 }
