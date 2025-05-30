@@ -13,6 +13,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pspdfkit_example/diable_annotation_edditing_example.dart';
 import 'package:pspdfkit_example/models/papsdkit_example_item.dart';
 import 'package:pspdfkit_example/pspdfkit_toolbar_customization.dart';
 
@@ -210,7 +211,15 @@ List<PspdfkitExampleItem> examples(BuildContext context) => [
                 NutrientAnnotationCreationModeExampleWidget(
                     documentPath: value.path),
                 context));
-          })
+          }),
+      PspdfkitExampleItem(
+          title: 'Disable Annotation Editing',
+          description: 'Shows how to disable annotation editing.',
+          onTap: () async {
+            await extractAsset(context, _documentPath).then((value) => goTo(
+                DisableAnnotationEditingExample(documentPath: value.path),
+                context));
+          }),
     ];
 
 List<PspdfkitExampleItem> globalExamples(BuildContext context) => [

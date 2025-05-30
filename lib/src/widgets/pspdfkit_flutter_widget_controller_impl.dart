@@ -291,4 +291,14 @@ class PspdfkitFlutterWidgetControllerImpl
   void onDocumentSaved(String documentId, String? path) {
     onPdfDocumentSaved?.call(documentId, path);
   }
+
+  @override
+  Future<void> enableAnnotationEditing(
+      {bool enable = true, AnnotationType? annotationType, String? toolName}) {
+    return _pspdfkitWidgetControllerApi.enableAnnotationEditing(
+      enable,
+      annotationType,
+      toolName,
+    );
+  }
 }

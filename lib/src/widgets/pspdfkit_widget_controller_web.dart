@@ -251,4 +251,11 @@ class PspdfkitWidgetControllerWeb extends PspdfkitWidgetController
   Future<double> getZoomScale(int pageIndex) {
     return pspdfkitInstance.getZoomScale(pageIndex);
   }
+
+  @override
+  Future<void> enableAnnotationEditing(
+      {bool enable = true, AnnotationType? annotationType}) {
+    // TODO: Implement if you use web.
+    throw UnimplementedError();
+  }
 }

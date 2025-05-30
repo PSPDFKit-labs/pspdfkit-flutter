@@ -566,6 +566,9 @@ abstract class PspdfkitWidgetControllerApi {
   /// exiting annotation creation mode was successful.
   @async
   bool? exitAnnotationCreationMode();
+
+  void enableAnnotationEditing(
+      bool enable, AnnotationType? annotationType, String? toolName);
 }
 
 @HostApi()

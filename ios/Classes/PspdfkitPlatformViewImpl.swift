@@ -335,8 +335,25 @@ public class PspdfkitPlatformViewImpl: NSObject, PspdfkitWidgetControllerApi, PD
             completion(.failure(PspdfkitApiError(code: "error", message: "Error exiting annotation creation mode: \(error.localizedDescription)", details: nil)))
         }
     }
-
-
+    
+    func enableAnnotationEditing(enable: Bool, annotationType: AnnotationType?, toolName: String?) throws {
+        guard let pdfViewController = pdfViewController else {
+            throw PspdfkitApiError(code: "error", message: "PDF view controller is null", details: nil)
+        }
+        pdfViewController.updateConfiguration { builder in
+            if enable {
+                // Enable all annotation types - set to a comprehensive set of annotation tools
+                builder.editableAnnotationTypes = [
+                    .ink, .highlight, .strikeOut, .underline, .squiggly, .note, .freeText,
+                    .square, .circle, .line, .polygon, .polyLine, .stamp, .image,
+                    .signature, .eraser, .sound, .redaction
+                ]
+            } else {
+                // Disable all annotation editing by setting to nil
+                builder.editableAnnotationTypes = nil
+            }
+        }
+    }
 
     @objc func spreadIndexDidChange(_ notification: Notification) {
           if let newSpreadIndex = notification.userInfo?["PSPDFDocumentViewControllerSpreadIndexKey"] as? Int,
