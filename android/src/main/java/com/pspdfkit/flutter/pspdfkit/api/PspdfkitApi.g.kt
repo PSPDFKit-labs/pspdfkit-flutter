@@ -2613,3 +2613,34 @@ class AnalyticsEventsCallback(private val binaryMessenger: BinaryMessenger, priv
     }
   }
 }
+/**
+ * Callbacks for custom toolbar item interactions
+ *
+ * Generated class from Pigeon that represents Flutter messages that can be called from Kotlin.
+ */
+class CustomToolbarCallbacks(private val binaryMessenger: BinaryMessenger, private val messageChannelSuffix: String = "") {
+  companion object {
+    /** The codec used by CustomToolbarCallbacks. */
+    val codec: MessageCodec<Any?> by lazy {
+      PspdfkitApiPigeonCodec()
+    }
+  }
+  /** Called when a custom toolbar item is tapped */
+  fun onCustomToolbarItemTapped(identifierArg: String, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.pspdfkit_flutter.CustomToolbarCallbacks.onCustomToolbarItemTapped$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(identifierArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(PspdfkitApiError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(createConnectionError(channelName)))
+      } 
+    }
+  }
+}

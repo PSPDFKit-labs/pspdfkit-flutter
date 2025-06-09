@@ -9,7 +9,8 @@ class PspdfkitFlutterWidgetControllerImpl
     implements
         PspdfkitWidgetController,
         PspdfkitWidgetCallbacks,
-        NutrientEventsCallbacks {
+        NutrientEventsCallbacks,
+        CustomToolbarCallbacks {
   final PspdfkitWidgetControllerApi _pspdfkitWidgetControllerApi;
   final PdfDocumentLoadedCallback? onPdfDocumentLoaded;
   final PdfDocumentLoadFailedCallback? onPdfDocumentLoadFailed;
@@ -17,6 +18,7 @@ class PspdfkitFlutterWidgetControllerImpl
   final PdfDocumentSavedCallback? onPdfDocumentSaved;
   final PageClickedCallback? onPageClicked;
   final Map<NutrientEvent, Function(dynamic eventData)> _eventListeners = {};
+  final OnCustomToolbarItemTappedCallback? onCustomToolbarItemTappedListener;
 
   PspdfkitFlutterWidgetControllerImpl(
     this._pspdfkitWidgetControllerApi, {
@@ -25,6 +27,7 @@ class PspdfkitFlutterWidgetControllerImpl
     this.onPdfPageChanged,
     this.onPdfDocumentSaved,
     this.onPageClicked,
+    this.onCustomToolbarItemTappedListener,
   });
 
   @override
@@ -180,8 +183,7 @@ class PspdfkitFlutterWidgetControllerImpl
           (event == NutrientEvent.annotationsCreated ||
               event == NutrientEvent.annotationsUpdated ||
               event == NutrientEvent.annotationsSelected ||
-              event == NutrientEvent.annotationsDeselected ||
-              event == NutrientEvent.annotationsDeleted)) {
+              event == NutrientEvent.annotationsDeselected)) {
         try {
           // Process annotations data
           if (data.containsKey('annotations')) {
@@ -275,6 +277,8 @@ class PspdfkitFlutterWidgetControllerImpl
                 }
               }
             }
+          } else {
+            data = data;
           }
         } catch (e) {
           if (kDebugMode) {
@@ -282,7 +286,6 @@ class PspdfkitFlutterWidgetControllerImpl
           }
         }
       }
-
       _eventListeners[event]?.call(data);
     }
   }
@@ -300,5 +303,7 @@ class PspdfkitFlutterWidgetControllerImpl
       annotationType,
       toolName,
     );
+  void onCustomToolbarItemTapped(String identifier) {
+    onCustomToolbarItemTappedListener?.call(identifier);
   }
 }
