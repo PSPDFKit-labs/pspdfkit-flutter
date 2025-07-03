@@ -36,14 +36,13 @@ class PspdfkitConfigurationExample extends StatelessWidget {
                 child: PspdfkitWidget(
                     documentPath: documentPath,
                     configuration: PdfConfiguration(
-                        scrollDirection: PspdfkitScrollDirection.vertical,
-                        pageTransition: PspdfkitPageTransition.scrollContinuous,
-                        spreadFitting: PspdfkitSpreadFitting.fit,
-                        userInterfaceViewMode:
-                            PspdfkitUserInterfaceViewMode.automatic,
+                        scrollDirection: ScrollDirection.vertical,
+                        pageTransition: PageTransition.scrollContinuous,
+                        spreadFitting: SpreadFitting.fit,
+                        userInterfaceViewMode: UserInterfaceViewMode.automatic,
                         androidShowSearchAction: true,
                         inlineSearch: false,
-                        showThumbnailBar: PspdfkitThumbnailBarMode.floating,
+                        showThumbnailBar: ThumbnailBarMode.floating,
                         androidShowThumbnailGridAction: true,
                         androidShowOutlineAction: true,
                         androidShowAnnotationListAction: true,
@@ -59,7 +58,7 @@ class PspdfkitConfigurationExample extends StatelessWidget {
                         androidShowShareAction: true,
                         androidShowPrintAction: false,
                         androidShowDocumentInfoView: true,
-                        appearanceMode: PspdfkitAppearanceMode.defaultMode,
+                        appearanceMode: AppearanceMode.defaultMode,
                         androidDefaultThemeResource: 'PSPDFKit.Theme.Example',
                         iOSRightBarButtonItems: [
                           'thumbnailsButtonItem',
@@ -82,7 +81,7 @@ class PspdfkitConfigurationExample extends StatelessWidget {
                           'iOSBrightness'
                         ],
                         showActionNavigationButtons: false,
-                        pageLayoutMode: PspdfkitPageLayoutMode.double,
+                        pageLayoutMode: PageLayoutMode.double,
                         firstPageAlwaysSingle: true,
                         signatureSavingStrategy:
                             SignatureSavingStrategy.neverSave,
@@ -106,20 +105,20 @@ class PspdfkitConfigurationExample extends StatelessWidget {
                                   aspectRatio: 1 / 1,
                                 )),
                         webConfiguration: PdfWebConfiguration(
-                            toolbarPlacement: PspdfKitToolbarPlacement.bottom,
+                            toolbarPlacement: ToolbarPlacement.bottom,
                             enableHistory: true,
                             disableTextSelection: false,
-                            sideBarMode: PspdfkitSidebarMode.bookmarks,
-                            interactionMode: PspdfkitWebInteractionMode.pan,
+                            sideBarMode: SidebarMode.bookmarks,
+                            interactionMode: NutrientWebInteractionMode.pan,
                             locale: 'de-DE',
-                            zoom: PspdfkitZoomMode.fitToViewPort,
+                            zoom: ZoomMode.fitToViewPort,
                             toolbarItems: defaultWebToolbarItems
-                              ?..add(PspdfkitWebToolbarItem(
-                                type: PspdfkitWebToolbarItemType.comment,
+                              ?..add(NutrientWebToolbarItem(
+                                type: NutrientWebToolbarItemType.comment,
                                 title: 'Comments',
                               ))
                               ..removeWhere((item) =>
-                                  item.type == PspdfkitWebToolbarItemType.note),
+                                  item.type == NutrientWebToolbarItemType.note),
                             allowPrinting: false))))));
   }
 }

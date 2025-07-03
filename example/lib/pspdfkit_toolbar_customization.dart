@@ -63,8 +63,8 @@ class PspdfkitToolbarCustomization extends StatelessWidget {
                             toolbarItems: [
                               ...defaultWebToolbarItems?.reversed ?? [],
                               // Add custom web toolbar item.
-                              PspdfkitWebToolbarItem(
-                                  type: PspdfkitWebToolbarItemType.custom,
+                              NutrientWebToolbarItem(
+                                  type: NutrientWebToolbarItemType.custom,
                                   title: 'Custom ToolbarItem',
                                   onPress: (event) {
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -72,8 +72,8 @@ class PspdfkitToolbarCustomization extends StatelessWidget {
                                             content: Text(
                                                 'Hello from custom button!')));
                                   }),
-                              PspdfkitWebToolbarItem(
-                                  type: PspdfkitWebToolbarItemType.custom,
+                              NutrientWebToolbarItem(
+                                  type: NutrientWebToolbarItemType.custom,
                                   title: 'Custom Button',
                                   onPress: (event) {
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -81,39 +81,39 @@ class PspdfkitToolbarCustomization extends StatelessWidget {
                                             content: Text(
                                                 'Hello Custom Button! $event')));
                                   }),
-                              PspdfkitWebToolbarItem(
+                              NutrientWebToolbarItem(
                                 type:
-                                    PspdfkitWebToolbarItemType.responsiveGroup,
+                                    NutrientWebToolbarItemType.responsiveGroup,
                                 title: 'Responsive Group',
                                 id: 'my-responsive-group',
                                 mediaQueries: ['(max-width: 600px)'],
                               ),
-                              PspdfkitWebToolbarItem(
-                                type: PspdfkitWebToolbarItemType.custom,
+                              NutrientWebToolbarItem(
+                                type: NutrientWebToolbarItemType.custom,
                                 title: 'Custom Button 2',
                                 id: 'my-custom-button-2',
                                 responsiveGroup: 'my-responsive-group',
                               ),
-                              PspdfkitWebToolbarItem(
-                                type: PspdfkitWebToolbarItemType.custom,
+                              NutrientWebToolbarItem(
+                                type: NutrientWebToolbarItemType.custom,
                                 title: 'Custom Button 3',
                                 id: 'my-custom-button-3',
                                 responsiveGroup: 'my-responsive-group',
                               ),
-                              PspdfkitWebToolbarItem(
-                                type: PspdfkitWebToolbarItemType.custom,
+                              NutrientWebToolbarItem(
+                                type: NutrientWebToolbarItemType.custom,
                                 title: 'Custom Button 4',
                                 id: 'my-custom-button-4',
                                 dropdownGroup: 'my-dropdown-group',
                               ),
-                              PspdfkitWebToolbarItem(
-                                type: PspdfkitWebToolbarItemType.custom,
+                              NutrientWebToolbarItem(
+                                type: NutrientWebToolbarItemType.custom,
                                 title: 'Custom Button 5',
                                 id: 'my-custom-button-5',
                                 dropdownGroup: 'my-dropdown-group',
                               ),
-                              PspdfkitWebToolbarItem(
-                                type: PspdfkitWebToolbarItemType.custom,
+                              NutrientWebToolbarItem(
+                                type: NutrientWebToolbarItemType.custom,
                                 title: 'Custom Button 6',
                                 id: 'my-custom-button-6',
                                 dropdownGroup: 'my-dropdown-group',
@@ -129,11 +129,11 @@ class PspdfkitToolbarCustomization extends StatelessWidget {
                               ''';
 
                               return [
-                                PspdfkitWebAnnotationToolbarItem(
-                                    type: PspdfkitWebAnnotationToolbarItemType
+                                NutrientWebAnnotationToolbarItem(
+                                    type: NutrientWebAnnotationToolbarItemType
                                         .fillColor),
-                                PspdfkitWebAnnotationToolbarItem(
-                                    type: PspdfkitWebAnnotationToolbarItemType
+                                NutrientWebAnnotationToolbarItem(
+                                    type: NutrientWebAnnotationToolbarItemType
                                         .custom,
                                     id: 'custom-annotation-button',
                                     icon: icon,

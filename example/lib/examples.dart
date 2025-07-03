@@ -331,7 +331,7 @@ void applyDarkTheme(context) async {
                   child: PspdfkitWidget(
                       documentPath: extractedDocument.path,
                       configuration: PdfConfiguration(
-                          appearanceMode: PspdfkitAppearanceMode.night,
+                          appearanceMode: AppearanceMode.night,
                           androidDarkThemeResource:
                               'PSPDFKit.Theme.Example.Dark')))))));
 }
@@ -456,7 +456,7 @@ void applyDarkThemeGlobal(context) async {
   final extractedDocument = await extractAsset(context, _documentPath);
   await Pspdfkit.present(extractedDocument.path,
       configuration: PdfConfiguration(
-          appearanceMode: PspdfkitAppearanceMode.night,
+          appearanceMode: AppearanceMode.night,
           androidDarkThemeResource: 'PSPDFKit.Theme.Example.Dark'));
 }
 
@@ -464,13 +464,13 @@ void applyCustomConfigurationGlobal(context) async {
   final extractedDocument = await extractAsset(context, _documentPath);
   await Pspdfkit.present(extractedDocument.path,
       configuration: PdfConfiguration(
-          scrollDirection: PspdfkitScrollDirection.vertical,
-          pageTransition: PspdfkitPageTransition.scrollPerSpread,
-          spreadFitting: PspdfkitSpreadFitting.fit,
-          userInterfaceViewMode: PspdfkitUserInterfaceViewMode.always,
+          scrollDirection: ScrollDirection.vertical,
+          pageTransition: PageTransition.scrollPerSpread,
+          spreadFitting: SpreadFitting.fit,
+          userInterfaceViewMode: UserInterfaceViewMode.always,
           androidShowSearchAction: true,
           inlineSearch: false,
-          showThumbnailBar: PspdfkitThumbnailBarMode.floating,
+          showThumbnailBar: ThumbnailBarMode.floating,
           androidShowThumbnailGridAction: true,
           androidShowOutlineAction: true,
           androidShowAnnotationListAction: true,
@@ -486,7 +486,7 @@ void applyCustomConfigurationGlobal(context) async {
           androidShowShareAction: true,
           androidShowPrintAction: false,
           androidShowDocumentInfoView: true,
-          appearanceMode: PspdfkitAppearanceMode.defaultMode,
+          appearanceMode: AppearanceMode.defaultMode,
           androidDefaultThemeResource: 'PSPDFKit.Theme.Example',
           iOSRightBarButtonItems: [
             'thumbnailsButtonItem',
@@ -509,7 +509,7 @@ void applyCustomConfigurationGlobal(context) async {
             'iOSBrightness'
           ],
           showActionNavigationButtons: false,
-          pageLayoutMode: PspdfkitPageLayoutMode.double,
+          pageLayoutMode: PageLayoutMode.double,
           firstPageAlwaysSingle: true));
 }
 

@@ -47,8 +47,8 @@ class _PspdfkitMeasurementsExampleState
                   webConfiguration: kIsWeb
                       ? PdfWebConfiguration(toolbarItems: [
                           ...Pspdfkit.defaultWebToolbarItems,
-                          PspdfkitWebToolbarItem(
-                              type: PspdfkitWebToolbarItemType.measurements)
+                          NutrientWebToolbarItem(
+                              type: NutrientWebToolbarItemType.measurements)
                         ])
                       : null),
             ),

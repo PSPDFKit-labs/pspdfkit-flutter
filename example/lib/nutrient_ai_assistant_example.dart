@@ -116,8 +116,8 @@ class _NutrientAiAssistantExampleState
                 instant: true,
                 toolbarItems: [
                   // Add AI Assistant button to the toolbar on web
-                  PspdfkitWebToolbarItem(
-                    type: PspdfkitWebToolbarItemType.aiAssistant,
+                  NutrientWebToolbarItem(
+                    type: NutrientWebToolbarItemType.aiAssistant,
                   ),
                   ...defaultWebToolbarItems,
                 ],
