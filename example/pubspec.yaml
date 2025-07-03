@@ -16,8 +16,10 @@ dependencies:
   url_launcher: ^6.1.10
   dart_jsonwebtoken: ^2.12.1
   uuid: ^4.3.3
-  pspdfkit_flutter:
-    path: ../
+  # pspdfkit_flutter:
+  #   path: ../
+  nutrient_flutter:
+    path: ../../PSPDFKit/flutter/pspdfkit-flutter
 
 dev_dependencies:
   flutter_lints: ^2.0.1

@@ -8,7 +8,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

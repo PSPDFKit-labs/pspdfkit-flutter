@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pspdfkit_example/examples.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 import 'example_list_view.dart';
 
 const String _pspdfkitFlutterPluginTitle =

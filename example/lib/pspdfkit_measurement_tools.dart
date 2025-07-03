@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 class PspdfkitMeasurementsExample extends StatefulWidget {
   final String documentPath;
@@ -43,7 +43,7 @@ class _PspdfkitMeasurementsExampleState
                   measurementValueConfigurations: [
                     _measurementValueConfiguration
                   ],
-                  pageLayoutMode: PspdfkitPageLayoutMode.single,
+                  pageLayoutMode: PageLayoutMode.single,
                   webConfiguration: kIsWeb
                       ? PdfWebConfiguration(toolbarItems: [
                           ...Pspdfkit.defaultWebToolbarItems,

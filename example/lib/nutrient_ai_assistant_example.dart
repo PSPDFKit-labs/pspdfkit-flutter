@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pspdfkit_example/utils/jwt_util.dart';
 import 'package:pspdfkit_example/widgets/pdf_viewer_scaffold.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 /// A minimal example demonstrating AI Assistant with automatic configuration

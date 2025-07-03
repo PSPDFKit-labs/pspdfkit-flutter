@@ -8,7 +8,7 @@
 ///
 
 import 'package:flutter/material.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 import 'widgets/pdf_viewer_scaffold.dart';
 

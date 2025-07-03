@@ -9,7 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'utils/platform_utils.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 class InstantCollaborationWeb extends StatelessWidget {
   const InstantCollaborationWeb({super.key});

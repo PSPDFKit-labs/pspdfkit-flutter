@@ -9,7 +9,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pspdfkit_flutter/pspdfkit_flutter.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 import 'draggable_control_panel.dart';
 

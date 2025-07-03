@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 class PspdfkitEventListenerExample extends StatefulWidget {
   final String documentPath;

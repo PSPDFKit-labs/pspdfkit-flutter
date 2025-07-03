@@ -33,7 +33,7 @@ import 'package:pspdfkit_example/pspdfkit_pdf_generation_example.dart';
 import 'package:pspdfkit_example/pspdfkit_save_as_example.dart';
 import 'package:pspdfkit_example/nutrient_annotation_flags.dart';
 
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 import 'pspdfkit_basic_example.dart';
 import 'pspdfkit_form_example.dart';

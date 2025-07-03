@@ -13,7 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pspdfkit_example/utils/platform_utils.dart';
-import 'package:pspdfkit_flutter/pspdfkit.dart';
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 class PspdfkitAnnotationProcessingExampleWidget extends StatefulWidget {
   final String documentPath;
