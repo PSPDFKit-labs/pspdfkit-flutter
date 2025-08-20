@@ -30,14 +30,20 @@ import androidx.lifecycle.Lifecycle
 import com.pspdfkit.document.PdfDocument
 import com.pspdfkit.flutter.pspdfkit.api.CustomToolbarCallbacks
 import com.pspdfkit.ui.PdfUiFragment
+import com.pspdfkit.ui.toolbar.ContextualToolbar
+import com.pspdfkit.ui.toolbar.ToolbarCoordinatorLayout
+import com.pspdfkit.annotations.Annotation
 import com.pspdfkit.R
 
-class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider {
+class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLayout.OnContextualToolbarLifecycleListener {
 
     // Maps identifier strings to menu item IDs to track custom toolbar items
     private val customToolbarItemIds = HashMap<String, Int>()
     private var customToolbarCallbacks: CustomToolbarCallbacks? = null
     private var customToolbarItems: List<Map<String, Any>>? = null
+    
+    // Store current contextual toolbar for annotation access
+    private var currentContextualToolbar: ContextualToolbar<*>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +64,11 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
         return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setOnContextualToolbarLifecycleListener(this)
     }
 
     /**
@@ -299,5 +310,60 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider {
                 // Handle the back button action here
             }
         }
+    }
+
+    /**
+     * Helper method to determine if the delete button should be hidden based on annotation custom data.
+     * 
+     * @return True if delete button should be hidden, false otherwise
+     */
+    private fun shouldHideDeleteButton(): Boolean {
+        try {
+            if (document != null) {
+                Log.d("FlutterPdfUiFragment", "Checking annotations for hideDelete custom data")
+                
+                val annotations: List<Annotation> = pdfFragment?.selectedAnnotations ?: emptyList()
+                
+                for (annotation in annotations) {
+                    val customData = annotation.customData
+                    if (customData != null && customData.has("hideDelete")) {
+                        Log.d("FlutterPdfUiFragment", "Annotation ${annotation.type} has hideDelete custom data")
+                        return true
+                    }
+                }
+            }
+            return false
+        } catch (e: Exception) {
+            Log.e("FlutterPdfUiFragment", "Error checking annotation custom data", e)
+            return false
+        }
+    }
+
+    override fun onPrepareContextualToolbar(toolbar: ContextualToolbar<*>) {
+        currentContextualToolbar = toolbar
+        val shouldHideDelete = shouldHideDeleteButton()
+        
+        if (shouldHideDelete) {
+            toolbar.setMenuItemVisibility(
+                R.id.pspdf__annotation_editing_toolbar_item_delete,
+                View.GONE
+            )
+        }
+    }
+
+    override fun onDisplayContextualToolbar(toolbar: ContextualToolbar<*>) {
+        currentContextualToolbar = toolbar
+        val shouldHideDelete = shouldHideDeleteButton()
+        
+        if (shouldHideDelete) {
+            toolbar.setMenuItemVisibility(
+                R.id.pspdf__annotation_editing_toolbar_item_delete,
+                View.GONE
+            )
+        }
+    }
+
+    override fun onRemoveContextualToolbar(toolbar: ContextualToolbar<*>) {
+        currentContextualToolbar = null
     }
 }

@@ -114,6 +114,93 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
         // This ensures our tap recognizer doesn't block PSPDFKit's built-in gestures
         return true
     }
+    
+    // MARK: - Menu Filtering Delegate Methods
+    
+    public func pdfViewController(_ pdfController: PDFViewController, 
+                               menuForAnnotations annotations: [Annotation],
+                               onPageView pageView: PDFPageView,
+                               appearance: EditMenuAppearance,
+                               suggestedMenu: UIMenu) -> UIMenu {
+        print("*** menuForAnnotations delegate method called! Annotations count: \(annotations.count)")
+        
+        if suggestedMenu.children.isEmpty {
+            print("*** No suggested menu or empty menu, returning original")
+            return suggestedMenu
+        }
+        
+        print("*** Original menu has \(suggestedMenu.children.count) children")
+        
+        // Check if delete should be hidden based on annotation custom data
+        let shouldHideDelete = shouldHideDeleteButton(for: annotations)
+        
+        // Filter out delete actions conditionally based on custom data
+        let filteredMenu = filterActionsFromMenu(suggestedMenu, shouldHideDelete: shouldHideDelete)
+        
+        print("*** Final menu has \(filteredMenu.children.count) children")
+        
+        return filteredMenu
+    }
+    
+    // MARK: - Menu Filtering Helper
+    
+    /**
+     * Helper method to determine if the delete button should be hidden based on annotation custom data.
+     *
+     * @param annotations The annotations to check
+     * @return True if delete button should be hidden, false otherwise
+     */
+    private func shouldHideDeleteButton(for annotations: [Annotation]) -> Bool {
+        // Check each annotation's custom data
+        for annotation in annotations {
+            if let customData = annotation.customData,
+               let hideDelete = customData["hideDelete"] {
+                // Check if hideDelete is set to true (as string or boolean)
+                if (hideDelete as? String) == "true" || (hideDelete as? Bool) == true {
+                    print("*** Hiding delete button for annotation with hideDelete custom data")
+                    return true
+                }
+            }
+        }
+        
+        return false
+    }
+    
+    private func filterActionsFromMenu(_ menu: UIMenu, shouldHideDelete: Bool = true) -> UIMenu {
+        var filteredChildren: [UIMenuElement] = []
+        
+        for element in menu.children {
+            if let action = element as? UIAction {
+                print("Found action - identifier: '\(action.identifier.rawValue)', title: '\(action.title)'")
+                
+                // Only filter delete actions if shouldHideDelete is true
+                let isDeleteAction = action.identifier.rawValue == "com.pspdfkit.action.delete" ||
+                    action.identifier.rawValue.hasSuffix(".delete") == true ||
+                    action.identifier.rawValue.lowercased().contains("delete") == true ||
+                    action.title.lowercased().contains("delete")
+                
+                let shouldFilter = shouldHideDelete && isDeleteAction
+                
+                if !shouldFilter {
+                    filteredChildren.append(element)
+                    print("Kept action: \(action.identifier.rawValue)")
+                } else {
+                    print("*** FILTERED OUT delete action: '\(action.identifier.rawValue)' - '\(action.title)'")
+                }
+            } else if let submenu = element as? UIMenu {
+                // Recursively filter submenus
+                let filteredSubmenu = filterActionsFromMenu(submenu, shouldHideDelete: shouldHideDelete)
+                if !filteredSubmenu.children.isEmpty {
+                    filteredChildren.append(filteredSubmenu)
+                }
+            } else {
+                // Keep other elements (like UICommand)
+                filteredChildren.append(element)
+            }
+        }
+        
+        return menu.replacingChildren(filteredChildren)
+    }
 
     func setFormFieldValue(value: String, fullyQualifiedName: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
         do {
