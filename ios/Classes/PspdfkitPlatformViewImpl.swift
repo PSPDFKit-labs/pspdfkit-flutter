@@ -117,6 +117,18 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
     
     // MARK: - Menu Filtering Delegate Methods
     
+    /**
+     * Customizes the annotation context menu by filtering out modification actions for protected annotations.
+     * 
+     * This delegate method is called when the user selects annotations and a context menu is displayed.
+     * For annotations with 'hideDelete': true in customData, all modification actions are filtered out.
+     * 
+     * References:
+     * - iOS Menu Customization: https://www.nutrient.io/guides/ios/customizing-the-interface/customizing-menus/
+     * - PDFViewController Delegate: https://www.nutrient.io/api/ios/documentation/pspdfkit/pdfviewcontrollerdelegate/
+     * - UIMenu API: https://developer.apple.com/documentation/uikit/uimenu
+     * - Annotation Custom Data: https://www.nutrient.io/guides/ios/annotations/annotation-json/
+     */
     public func pdfViewController(_ pdfController: PDFViewController, 
                                menuForAnnotations annotations: [Annotation],
                                onPageView pageView: PDFPageView,
@@ -145,10 +157,17 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
     // MARK: - Menu Filtering Helper
     
     /**
-     * Helper method to determine if the delete button should be hidden based on annotation custom data.
+     * Helper method to determine if annotation modification actions should be hidden based on custom data.
+     * 
+     * Checks if any of the selected annotations have 'hideDelete' set to true in their customData.
+     * When true, all modification actions (delete, edit, copy, cut, style, etc.) will be hidden.
+     * 
+     * References:
+     * - Annotation Custom Data: https://www.nutrient.io/guides/ios/annotations/annotation-json/
+     * - Annotation Class: https://www.nutrient.io/api/ios/documentation/pspdfkit/annotation/
      *
      * @param annotations The annotations to check
-     * @return True if delete button should be hidden, false otherwise
+     * @return True if modification actions should be hidden, false otherwise
      */
     private func shouldHideDeleteButton(for annotations: [Annotation]) -> Bool {
         // Check each annotation's custom data
@@ -166,6 +185,21 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
         return false
     }
     
+    /**
+     * Recursively filters UIMenu actions to remove modification-related actions when shouldHideDelete is true.
+     * 
+     * This method identifies actions by checking both their identifier.rawValue and title for keywords
+     * related to modification operations (delete, copy, cut, edit, style, inspector, note, group).
+     * 
+     * References:
+     * - UIMenu API: https://developer.apple.com/documentation/uikit/uimenu
+     * - UIAction API: https://developer.apple.com/documentation/uikit/uiaction
+     * - PSPDFKit Action Identifiers: Actions typically follow "com.pspdfkit.action.{actionName}" pattern
+     * 
+     * @param menu The menu to filter
+     * @param shouldHideDelete Whether to hide modification actions
+     * @return A new UIMenu with filtered actions
+     */
     private func filterActionsFromMenu(_ menu: UIMenu, shouldHideDelete: Bool = true) -> UIMenu {
         var filteredChildren: [UIMenuElement] = []
         
@@ -173,19 +207,57 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
             if let action = element as? UIAction {
                 print("Found action - identifier: '\(action.identifier.rawValue)', title: '\(action.title)'")
                 
-                // Only filter delete actions if shouldHideDelete is true
+                // Filter all modification actions if shouldHideDelete is true
                 let isDeleteAction = action.identifier.rawValue == "com.pspdfkit.action.delete" ||
                     action.identifier.rawValue.hasSuffix(".delete") == true ||
                     action.identifier.rawValue.lowercased().contains("delete") == true ||
                     action.title.lowercased().contains("delete")
                 
-                let shouldFilter = shouldHideDelete && isDeleteAction
+                let isInspectorAction = action.identifier.rawValue == "com.pspdfkit.action.inspector" ||
+                    action.identifier.rawValue.hasSuffix(".inspector") == true ||
+                    action.identifier.rawValue.lowercased().contains("inspector") == true ||
+                    action.title.lowercased().contains("inspector")
+                
+                let isCopyAction = action.identifier.rawValue == "com.pspdfkit.action.copy" ||
+                    action.identifier.rawValue.hasSuffix(".copy") == true ||
+                    action.identifier.rawValue.lowercased().contains("copy") == true ||
+                    action.title.lowercased().contains("copy")
+                
+                let isCutAction = action.identifier.rawValue == "com.pspdfkit.action.cut" ||
+                    action.identifier.rawValue.hasSuffix(".cut") == true ||
+                    action.identifier.rawValue.lowercased().contains("cut") == true ||
+                    action.title.lowercased().contains("cut")
+                
+                let isEditAction = action.identifier.rawValue == "com.pspdfkit.action.edit" ||
+                    action.identifier.rawValue.hasSuffix(".edit") == true ||
+                    action.identifier.rawValue.lowercased().contains("edit") == true ||
+                    action.title.lowercased().contains("edit")
+                
+                let isStyleAction = action.identifier.rawValue == "com.pspdfkit.action.style" ||
+                    action.identifier.rawValue.hasSuffix(".style") == true ||
+                    action.identifier.rawValue.lowercased().contains("style") == true ||
+                    action.identifier.rawValue.lowercased().contains("picker") == true ||
+                    action.title.lowercased().contains("style") ||
+                    action.title.lowercased().contains("picker")
+                
+                let isNoteAction = action.identifier.rawValue == "com.pspdfkit.action.note" ||
+                    action.identifier.rawValue.hasSuffix(".note") == true ||
+                    action.identifier.rawValue.lowercased().contains("note") == true ||
+                    action.title.lowercased().contains("note")
+                
+                let isGroupAction = action.identifier.rawValue == "com.pspdfkit.action.group" ||
+                    action.identifier.rawValue.hasSuffix(".group") == true ||
+                    action.identifier.rawValue.lowercased().contains("group") == true ||
+                    action.title.lowercased().contains("group")
+                
+                let shouldFilter = shouldHideDelete && (isDeleteAction || isInspectorAction || isCopyAction || 
+                    isCutAction || isEditAction || isStyleAction || isNoteAction || isGroupAction)
                 
                 if !shouldFilter {
                     filteredChildren.append(element)
                     print("Kept action: \(action.identifier.rawValue)")
                 } else {
-                    print("*** FILTERED OUT delete action: '\(action.identifier.rawValue)' - '\(action.title)'")
+                    print("*** FILTERED OUT modification action: '\(action.identifier.rawValue)' - '\(action.title)'")
                 }
             } else if let submenu = element as? UIMenu {
                 // Recursively filter submenus

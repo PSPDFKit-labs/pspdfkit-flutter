@@ -33,7 +33,7 @@ import com.pspdfkit.ui.PdfUiFragment
 import com.pspdfkit.ui.toolbar.ContextualToolbar
 import com.pspdfkit.ui.toolbar.ToolbarCoordinatorLayout
 import com.pspdfkit.annotations.Annotation
-import com.pspdfkit.R
+
 
 class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLayout.OnContextualToolbarLifecycleListener {
 
@@ -313,9 +313,17 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
     }
 
     /**
-     * Helper method to determine if the delete button should be hidden based on annotation custom data.
+     * Helper method to determine if annotation modification actions should be hidden based on annotation custom data.
      * 
-     * @return True if delete button should be hidden, false otherwise
+     * When annotations have 'hideDelete': true in their customData, this will hide all modification options
+     * including delete, edit, copy, cut, style picker, inspector, etc.
+     * 
+     * References:
+     * - Android Contextual Toolbars: https://www.nutrient.io/guides/android/customizing-the-interface/customizing-the-toolbar/
+     * - Annotation Custom Data: https://www.nutrient.io/guides/android/annotations/annotation-json/
+     * - ContextualToolbar API: https://www.nutrient.io/api/android/kdoc/pspdfkit/com.pspdfkit.ui.toolbar/-contextual-toolbar/
+     * 
+     * @return True if modification actions should be hidden, false otherwise
      */
     private fun shouldHideDeleteButton(): Boolean {
         try {
@@ -344,10 +352,18 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
         val shouldHideDelete = shouldHideDeleteButton()
         
         if (shouldHideDelete) {
-            toolbar.setMenuItemVisibility(
-                R.id.pspdf__annotation_editing_toolbar_item_delete,
-                View.GONE
-            )
+            // Hide all modification actions for protected annotations
+            // Reference: Complete list of annotation editing menu item IDs can be found in Android resources
+            // See: https://www.nutrient.io/guides/android/customizing-the-interface/customizing-the-toolbar/
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_delete, View.GONE)        // Delete annotation
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_cut, View.GONE)           // Cut annotation to clipboard
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_copy, View.GONE)          // Copy annotation to clipboard
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_edit, View.GONE)          // Edit annotation content
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_picker, View.GONE)        // Style/appearance picker
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_annotation_note, View.GONE) // Edit annotation notes
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_inspector, View.GONE)                  // Properties inspector
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_group, View.GONE)         // Group annotations
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_ungroup, View.GONE)       // Ungroup annotations
         }
     }
 
@@ -356,10 +372,18 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
         val shouldHideDelete = shouldHideDeleteButton()
         
         if (shouldHideDelete) {
-            toolbar.setMenuItemVisibility(
-                R.id.pspdf__annotation_editing_toolbar_item_delete,
-                View.GONE
-            )
+            // Hide all modification actions for protected annotations
+            // Reference: Complete list of annotation editing menu item IDs can be found in Android resources
+            // See: https://www.nutrient.io/guides/android/customizing-the-interface/customizing-the-toolbar/
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_delete, View.GONE)        // Delete annotation
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_cut, View.GONE)           // Cut annotation to clipboard
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_copy, View.GONE)          // Copy annotation to clipboard
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_edit, View.GONE)          // Edit annotation content
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_picker, View.GONE)        // Style/appearance picker
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_annotation_note, View.GONE) // Edit annotation notes
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_inspector, View.GONE)                  // Properties inspector
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_group, View.GONE)         // Group annotations
+            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_ungroup, View.GONE)       // Ungroup annotations
         }
     }
 

@@ -112,9 +112,9 @@ List<NutrientExampleItem> examples(BuildContext context) => [
         onTap: () => annotationsExample(context),
       ),
       NutrientExampleItem(
-        title: 'Hide Delete Button on Annotations',
+        title: 'Hide Annotation Modification Options',
         description:
-            'Demonstrates how to use custom data to conditionally hide delete buttons on annotations.',
+            'Demonstrates how to use custom data to conditionally hide all modification options (delete, edit, copy, cut, style picker, etc.) on annotations.',
         onTap: () => hideDeleteAnnotationExample(context),
       ),
       NutrientExampleItem(

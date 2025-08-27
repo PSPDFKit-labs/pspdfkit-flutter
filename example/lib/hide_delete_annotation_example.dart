@@ -15,7 +15,16 @@ import 'utils/platform_utils.dart';
 import 'widgets/pdf_viewer_scaffold.dart';
 
 /// Example demonstrating how to use the hideDelete custom data to conditionally
-/// hide delete buttons on annotations in the PDF viewer.
+/// hide all annotation modification options in the PDF viewer.
+/// 
+/// This example shows how to create "protected" annotations that cannot be modified
+/// by users. When annotations have 'hideDelete': true in their customData, all
+/// modification actions are hidden from contextual menus.
+/// 
+/// References:
+/// - Annotation Custom Data: https://www.nutrient.io/guides/flutter/annotations/annotation-json/
+/// - Android Menu Customization: https://www.nutrient.io/guides/android/customizing-the-interface/customizing-the-toolbar/
+/// - iOS Menu Customization: https://www.nutrient.io/guides/ios/customizing-the-interface/customizing-menus/
 class HideDeleteAnnotationExampleWidget extends StatefulWidget {
   final String documentPath;
   final PdfConfiguration? configuration;
@@ -41,7 +50,7 @@ class _HideDeleteAnnotationExampleWidgetState
     if (PlatformUtils.isCurrentPlatformSupported()) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Hide Delete Button Example'),
+          title: const Text('Hide Annotation Modification Example'),
         ),
         body: Column(
           children: [
@@ -95,7 +104,7 @@ class _HideDeleteAnnotationExampleWidgetState
       );
     } else {
       return Scaffold(
-        appBar: AppBar(title: const Text('Hide Delete Button Example')),
+        appBar: AppBar(title: const Text('Hide Annotation Modification Example')),
         body: Center(
           child: Text(
             '$defaultTargetPlatform is not yet supported by PSPDFKit for Flutter.',
@@ -106,7 +115,13 @@ class _HideDeleteAnnotationExampleWidgetState
   }
 
   /// Adds annotations with hideDelete: true custom data
-  /// These annotations will not show a delete button in their contextual menu
+  /// These annotations will not show any modification options (delete, edit, copy, cut, style picker, etc.) in their contextual menu
+  /// 
+  /// The hideDelete property can be set as:
+  /// - String: 'hideDelete': 'true'
+  /// - Boolean: 'hideDelete': true
+  /// 
+  /// Reference: https://www.nutrient.io/guides/flutter/annotations/annotation-json/
   Future<void> _addProtectedAnnotations() async {
     final protectedAnnotations = [
       // Protected highlight annotation - delete button will be hidden
@@ -123,9 +138,9 @@ class _HideDeleteAnnotationExampleWidgetState
         pageIndex: 0,
         creatorName: 'System',
         customData: {
-          'hideDelete': 'true', // This will hide the delete button
-          'protected': 'true',
-          'reason': 'System generated annotation',
+          'hideDelete': 'true', // This will hide all modification options (delete, edit, copy, cut, style picker, etc.)
+          'protected': 'true',  // Additional custom property for application logic
+          'reason': 'System generated annotation', // Additional metadata
         },
       ),
 
@@ -143,9 +158,9 @@ class _HideDeleteAnnotationExampleWidgetState
         pageIndex: 0,
         creatorName: 'Administrator',
         customData: {
-          'hideDelete': true, // Boolean value also works
-          'protected': true,
-          'adminGenerated': true,
+          'hideDelete': true, // Boolean value also works - hides all modification options  
+          'protected': true,  // Additional custom property for application logic
+          'adminGenerated': true, // Additional metadata
         },
       ),
 
@@ -181,7 +196,7 @@ class _HideDeleteAnnotationExampleWidgetState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Protected annotations added! Try to select them - no delete button will appear.'),
+              'Protected annotations added! Try to select them - no modification options will appear.'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -189,7 +204,16 @@ class _HideDeleteAnnotationExampleWidgetState
   }
 
   /// Adds normal annotations without hideDelete custom data
-  /// These annotations will show the delete button normally
+  /// These annotations will show all modification options normally in their contextual menu
+  /// 
+  /// When hideDelete is not present or set to false, users can:
+  /// - Delete annotations
+  /// - Edit annotation content and properties  
+  /// - Copy/cut annotations
+  /// - Access style picker and inspector
+  /// - Group/ungroup annotations
+  /// 
+  /// Reference: https://www.nutrient.io/guides/flutter/annotations/annotation-json/
   Future<void> _addEditableAnnotations() async {
     final editableAnnotations = [
       // Normal highlight annotation - delete button will be visible
@@ -208,7 +232,7 @@ class _HideDeleteAnnotationExampleWidgetState
         customData: {
           'editable': true,
           'userGenerated': true,
-          // Note: no hideDelete property, so delete button will be visible
+          // Note: no hideDelete property, so all modification options will be visible
         },
       ),
 
@@ -228,7 +252,7 @@ class _HideDeleteAnnotationExampleWidgetState
         customData: {
           'editable': true,
           'userGenerated': true,
-          // hideDelete is not set, so delete button will appear
+          // hideDelete is not set, so all modification options will appear
         },
       ),
     ];
@@ -239,7 +263,7 @@ class _HideDeleteAnnotationExampleWidgetState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Editable annotations added! These will show the delete button.'),
+              'Editable annotations added! These will show all modification options.'),
           backgroundColor: Colors.green,
         ),
       );
