@@ -25,6 +25,7 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
         self.pdfViewController = controller
         self.pdfViewController?.delegate = self
         
+        
         // Set the host view for the annotation toolbar controller
         controller.annotationToolbarController?.updateHostView(nil, container: nil, viewController: controller)
         CustomToolbarHelper.setupCustomToolbarItems(for: pdfViewController!, customToolbarItems:customToolbarItems, callbacks: customToolbarCallbacks)
@@ -44,6 +45,7 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
     public func pdfViewController(_ pdfController: PDFViewController, didSelect annotations: [Annotation], on pageView: PDFPageView) {
         // Call the event helper to notify the listeners.
         eventsHelper?.annotationSelected(annotations: annotations)
+        
     }
     
     public func pdfViewController(_ pdfController: PDFViewController, didDeselect annotations: [Annotation], on pageView: PDFPageView) {
@@ -118,10 +120,11 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
     // MARK: - Menu Filtering Delegate Methods
     
     /**
-     * Customizes the annotation context menu by filtering out modification actions for protected annotations.
+     * Customizes the annotation context menu by completely disabling it for protected annotations.
      * 
      * This delegate method is called when the user selects annotations and a context menu is displayed.
-     * For annotations with 'hideDelete': true in customData, all modification actions are filtered out.
+     * For annotations with 'hideDelete': true in customData, the entire context menu is disabled
+     * to prevent all editing actions while still allowing annotation movement.
      * 
      * References:
      * - iOS Menu Customization: https://www.nutrient.io/guides/ios/customizing-the-interface/customizing-menus/
@@ -136,47 +139,44 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
                                suggestedMenu: UIMenu) -> UIMenu {
         print("*** menuForAnnotations delegate method called! Annotations count: \(annotations.count)")
         
-        if suggestedMenu.children.isEmpty {
-            print("*** No suggested menu or empty menu, returning original")
-            return suggestedMenu
+        // Check if editing should be disabled based on annotation custom data
+        let shouldDisableEditing = shouldDisableEditing(for: annotations)
+        
+        if shouldDisableEditing {
+            print("*** Disabling context menu entirely for protected annotations")
+            // Return an empty menu to completely disable the context menu
+            // This allows annotations to remain selectable and movable but prevents all editing actions
+            return UIMenu(title: "", children: [])
         }
         
-        print("*** Original menu has \(suggestedMenu.children.count) children")
-        
-        // Check if delete should be hidden based on annotation custom data
-        let shouldHideDelete = shouldHideDeleteButton(for: annotations)
-        
-        // Filter out delete actions conditionally based on custom data
-        let filteredMenu = filterActionsFromMenu(suggestedMenu, shouldHideDelete: shouldHideDelete)
-        
-        print("*** Final menu has \(filteredMenu.children.count) children")
-        
-        return filteredMenu
+        print("*** Returning original menu with \(suggestedMenu.children.count) children")
+        return suggestedMenu
     }
     
     // MARK: - Menu Filtering Helper
     
     /**
-     * Helper method to determine if annotation modification actions should be hidden based on custom data.
+     * Helper method to determine if annotation editing should be completely disabled based on custom data.
      * 
      * Checks if any of the selected annotations have 'hideDelete' set to true in their customData.
-     * When true, all modification actions (delete, edit, copy, cut, style, etc.) will be hidden.
+     * When true, the entire context menu will be disabled to prevent all editing actions
+     * while still allowing annotation selection and movement.
      * 
      * References:
      * - Annotation Custom Data: https://www.nutrient.io/guides/ios/annotations/annotation-json/
      * - Annotation Class: https://www.nutrient.io/api/ios/documentation/pspdfkit/annotation/
      *
      * @param annotations The annotations to check
-     * @return True if modification actions should be hidden, false otherwise
+     * @return True if editing should be disabled (context menu hidden), false otherwise
      */
-    private func shouldHideDeleteButton(for annotations: [Annotation]) -> Bool {
+    private func shouldDisableEditing(for annotations: [Annotation]) -> Bool {
         // Check each annotation's custom data
         for annotation in annotations {
             if let customData = annotation.customData,
                let hideDelete = customData["hideDelete"] {
                 // Check if hideDelete is set to true (as string or boolean)
                 if (hideDelete as? String) == "true" || (hideDelete as? Bool) == true {
-                    print("*** Hiding delete button for annotation with hideDelete custom data")
+                    print("*** Disabling editing for annotation with hideDelete custom data")
                     return true
                 }
             }
@@ -185,94 +185,44 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
         return false
     }
     
+    // MARK: - Annotation Interaction Control
+    // 
+    // Note: The previous filterActionsFromMenu method has been removed since we now
+    // completely disable the context menu for protected annotations rather than
+    // filtering individual actions. This provides a cleaner user experience.
+    
+    
     /**
-     * Recursively filters UIMenu actions to remove modification-related actions when shouldHideDelete is true.
+     * Helper method to check if an individual annotation is protected.
      * 
-     * This method identifies actions by checking both their identifier.rawValue and title for keywords
-     * related to modification operations (delete, copy, cut, edit, style, inspector, note, group).
-     * 
-     * References:
-     * - UIMenu API: https://developer.apple.com/documentation/uikit/uimenu
-     * - UIAction API: https://developer.apple.com/documentation/uikit/uiaction
-     * - PSPDFKit Action Identifiers: Actions typically follow "com.pspdfkit.action.{actionName}" pattern
-     * 
-     * @param menu The menu to filter
-     * @param shouldHideDelete Whether to hide modification actions
-     * @return A new UIMenu with filtered actions
+     * @param annotation The annotation to check
+     * @return True if the annotation has hideDelete set to true, false otherwise
      */
-    private func filterActionsFromMenu(_ menu: UIMenu, shouldHideDelete: Bool = true) -> UIMenu {
-        var filteredChildren: [UIMenuElement] = []
-        
-        for element in menu.children {
-            if let action = element as? UIAction {
-                print("Found action - identifier: '\(action.identifier.rawValue)', title: '\(action.title)'")
-                
-                // Filter all modification actions if shouldHideDelete is true
-                let isDeleteAction = action.identifier.rawValue == "com.pspdfkit.action.delete" ||
-                    action.identifier.rawValue.hasSuffix(".delete") == true ||
-                    action.identifier.rawValue.lowercased().contains("delete") == true ||
-                    action.title.lowercased().contains("delete")
-                
-                let isInspectorAction = action.identifier.rawValue == "com.pspdfkit.action.inspector" ||
-                    action.identifier.rawValue.hasSuffix(".inspector") == true ||
-                    action.identifier.rawValue.lowercased().contains("inspector") == true ||
-                    action.title.lowercased().contains("inspector")
-                
-                let isCopyAction = action.identifier.rawValue == "com.pspdfkit.action.copy" ||
-                    action.identifier.rawValue.hasSuffix(".copy") == true ||
-                    action.identifier.rawValue.lowercased().contains("copy") == true ||
-                    action.title.lowercased().contains("copy")
-                
-                let isCutAction = action.identifier.rawValue == "com.pspdfkit.action.cut" ||
-                    action.identifier.rawValue.hasSuffix(".cut") == true ||
-                    action.identifier.rawValue.lowercased().contains("cut") == true ||
-                    action.title.lowercased().contains("cut")
-                
-                let isEditAction = action.identifier.rawValue == "com.pspdfkit.action.edit" ||
-                    action.identifier.rawValue.hasSuffix(".edit") == true ||
-                    action.identifier.rawValue.lowercased().contains("edit") == true ||
-                    action.title.lowercased().contains("edit")
-                
-                let isStyleAction = action.identifier.rawValue == "com.pspdfkit.action.style" ||
-                    action.identifier.rawValue.hasSuffix(".style") == true ||
-                    action.identifier.rawValue.lowercased().contains("style") == true ||
-                    action.identifier.rawValue.lowercased().contains("picker") == true ||
-                    action.title.lowercased().contains("style") ||
-                    action.title.lowercased().contains("picker")
-                
-                let isNoteAction = action.identifier.rawValue == "com.pspdfkit.action.note" ||
-                    action.identifier.rawValue.hasSuffix(".note") == true ||
-                    action.identifier.rawValue.lowercased().contains("note") == true ||
-                    action.title.lowercased().contains("note")
-                
-                let isGroupAction = action.identifier.rawValue == "com.pspdfkit.action.group" ||
-                    action.identifier.rawValue.hasSuffix(".group") == true ||
-                    action.identifier.rawValue.lowercased().contains("group") == true ||
-                    action.title.lowercased().contains("group")
-                
-                let shouldFilter = shouldHideDelete && (isDeleteAction || isInspectorAction || isCopyAction || 
-                    isCutAction || isEditAction || isStyleAction || isNoteAction || isGroupAction)
-                
-                if !shouldFilter {
-                    filteredChildren.append(element)
-                    print("Kept action: \(action.identifier.rawValue)")
-                } else {
-                    print("*** FILTERED OUT modification action: '\(action.identifier.rawValue)' - '\(action.title)'")
-                }
-            } else if let submenu = element as? UIMenu {
-                // Recursively filter submenus
-                let filteredSubmenu = filterActionsFromMenu(submenu, shouldHideDelete: shouldHideDelete)
-                if !filteredSubmenu.children.isEmpty {
-                    filteredChildren.append(filteredSubmenu)
-                }
-            } else {
-                // Keep other elements (like UICommand)
-                filteredChildren.append(element)
+    private func isAnnotationProtected(_ annotation: Annotation) -> Bool {
+        if let customData = annotation.customData,
+           let hideDelete = customData["hideDelete"] {
+            return (hideDelete as? String) == "true" || (hideDelete as? Bool) == true
+        }
+        return false
+    }
+    
+    
+    /**
+     * PDFViewController delegate method to control annotation removal.
+     * 
+     * Blocks removal of protected annotations.
+     */
+    public func pdfViewController(_ pdfController: PDFViewController, shouldDelete annotations: [Annotation]) -> Bool {
+        for annotation in annotations {
+            if isAnnotationProtected(annotation) {
+                print("*** Blocking deletion for protected annotation")
+                return false
             }
         }
-        
-        return menu.replacingChildren(filteredChildren)
+        return true
     }
+    
+    
 
     func setFormFieldValue(value: String, fullyQualifiedName: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
         do {

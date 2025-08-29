@@ -112,9 +112,9 @@ List<NutrientExampleItem> examples(BuildContext context) => [
         onTap: () => annotationsExample(context),
       ),
       NutrientExampleItem(
-        title: 'Hide Annotation Modification Options',
+        title: 'Protected Annotations (Move Only)',
         description:
-            'Demonstrates how to use custom data to conditionally hide all modification options (delete, edit, copy, cut, style picker, etc.) on annotations.',
+            'Demonstrates how to create protected annotations that can be moved but not edited or resized. Uses custom data to disable contextual menus while preserving movement functionality.',
         onTap: () => hideDeleteAnnotationExample(context),
       ),
       NutrientExampleItem(

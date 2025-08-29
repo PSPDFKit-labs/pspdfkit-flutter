@@ -313,19 +313,19 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
     }
 
     /**
-     * Helper method to determine if annotation modification actions should be hidden based on annotation custom data.
+     * Helper method to determine if annotation editing should be disabled based on annotation custom data.
      * 
-     * When annotations have 'hideDelete': true in their customData, this will hide all modification options
-     * including delete, edit, copy, cut, style picker, inspector, etc.
+     * When annotations have 'hideDelete': true in their customData, this will disable the entire
+     * contextual toolbar and annotation resizing, but still allow moving the annotation.
      * 
      * References:
      * - Android Contextual Toolbars: https://www.nutrient.io/guides/android/customizing-the-interface/customizing-the-toolbar/
      * - Annotation Custom Data: https://www.nutrient.io/guides/android/annotations/annotation-json/
      * - ContextualToolbar API: https://www.nutrient.io/api/android/kdoc/pspdfkit/com.pspdfkit.ui.toolbar/-contextual-toolbar/
      * 
-     * @return True if modification actions should be hidden, false otherwise
+     * @return True if editing should be disabled (contextual toolbar hidden, resizing disabled), false otherwise
      */
-    private fun shouldHideDeleteButton(): Boolean {
+    private fun shouldDisableEditing(): Boolean {
         try {
             if (document != null) {
                 Log.d("FlutterPdfUiFragment", "Checking annotations for hideDelete custom data")
@@ -335,8 +335,12 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
                 for (annotation in annotations) {
                     val customData = annotation.customData
                     if (customData != null && customData.has("hideDelete")) {
-                        Log.d("FlutterPdfUiFragment", "Annotation ${annotation.type} has hideDelete custom data")
-                        return true
+                        val hideDeleteValue = customData.get("hideDelete")
+                        val shouldHide = hideDeleteValue == "true" || hideDeleteValue == true
+                        if (shouldHide) {
+                            Log.d("FlutterPdfUiFragment", "Annotation ${annotation.type} has hideDelete=true, disabling editing")
+                            return true
+                        }
                     }
                 }
             }
@@ -349,41 +353,30 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
 
     override fun onPrepareContextualToolbar(toolbar: ContextualToolbar<*>) {
         currentContextualToolbar = toolbar
-        val shouldHideDelete = shouldHideDeleteButton()
+        val shouldDisableEditing = shouldDisableEditing()
         
-        if (shouldHideDelete) {
-            // Hide all modification actions for protected annotations
-            // Reference: Complete list of annotation editing menu item IDs can be found in Android resources
-            // See: https://www.nutrient.io/guides/android/customizing-the-interface/customizing-the-toolbar/
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_delete, View.GONE)        // Delete annotation
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_cut, View.GONE)           // Cut annotation to clipboard
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_copy, View.GONE)          // Copy annotation to clipboard
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_edit, View.GONE)          // Edit annotation content
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_picker, View.GONE)        // Style/appearance picker
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_annotation_note, View.GONE) // Edit annotation notes
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_inspector, View.GONE)                  // Properties inspector
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_group, View.GONE)         // Group annotations
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_ungroup, View.GONE)       // Ungroup annotations
+        if (shouldDisableEditing) {
+            // Completely hide the contextual toolbar for protected annotations
+            // This removes access to resize handles and all editing actions
+            Log.d("FlutterPdfUiFragment", "Hiding contextual toolbar for protected annotation")
+            toolbar.visibility = View.GONE
+            
+            // This is the most direct approach available in PSPDFKit Android
+            // to prevent users from accessing resize handles for protected annotations
         }
     }
 
     override fun onDisplayContextualToolbar(toolbar: ContextualToolbar<*>) {
         currentContextualToolbar = toolbar
-        val shouldHideDelete = shouldHideDeleteButton()
+        val shouldDisableEditing = shouldDisableEditing()
         
-        if (shouldHideDelete) {
-            // Hide all modification actions for protected annotations
-            // Reference: Complete list of annotation editing menu item IDs can be found in Android resources
-            // See: https://www.nutrient.io/guides/android/customizing-the-interface/customizing-the-toolbar/
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_delete, View.GONE)        // Delete annotation
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_cut, View.GONE)           // Cut annotation to clipboard
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_copy, View.GONE)          // Copy annotation to clipboard
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_edit, View.GONE)          // Edit annotation content
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_picker, View.GONE)        // Style/appearance picker
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_annotation_note, View.GONE) // Edit annotation notes
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_inspector, View.GONE)                  // Properties inspector
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_group, View.GONE)         // Group annotations
-            toolbar.setMenuItemVisibility(R.id.pspdf__annotation_editing_toolbar_item_ungroup, View.GONE)       // Ungroup annotations
+        if (shouldDisableEditing) {
+            // Completely hide the contextual toolbar for protected annotations
+            // This removes access to resize handles and all editing actions
+            Log.d("FlutterPdfUiFragment", "Hiding contextual toolbar for protected annotation")
+            toolbar.visibility = View.GONE
+            
+            // This effectively prevents access to resize handles and editing controls
         }
     }
 

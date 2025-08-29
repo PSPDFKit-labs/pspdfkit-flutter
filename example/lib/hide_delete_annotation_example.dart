@@ -14,12 +14,15 @@ import 'package:nutrient_flutter/nutrient_flutter.dart';
 import 'utils/platform_utils.dart';
 import 'widgets/pdf_viewer_scaffold.dart';
 
-/// Example demonstrating how to use the hideDelete custom data to conditionally
-/// hide all annotation modification options in the PDF viewer.
+/// Example demonstrating how to use the hideDelete custom data to disable
+/// annotation editing while still allowing movement.
 /// 
-/// This example shows how to create "protected" annotations that cannot be modified
-/// by users. When annotations have 'hideDelete': true in their customData, all
-/// modification actions are hidden from contextual menus.
+/// This example shows how to create "protected" annotations that can be moved but not
+/// edited or resized. When annotations have 'hideDelete': true in their customData:
+/// - The contextual toolbar/menu is completely disabled
+/// - Annotation resizing is blocked
+/// - Annotation movement is still allowed
+/// - All modification actions (delete, edit, copy, cut, style picker, etc.) are prevented
 /// 
 /// References:
 /// - Annotation Custom Data: https://www.nutrient.io/guides/flutter/annotations/annotation-json/
@@ -50,7 +53,7 @@ class _HideDeleteAnnotationExampleWidgetState
     if (PlatformUtils.isCurrentPlatformSupported()) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Hide Annotation Modification Example'),
+          title: const Text('Protected Annotations (Move Only)'),
         ),
         body: Column(
           children: [
@@ -115,16 +118,23 @@ class _HideDeleteAnnotationExampleWidgetState
   }
 
   /// Adds annotations with hideDelete: true custom data
-  /// These annotations will not show any modification options (delete, edit, copy, cut, style picker, etc.) in their contextual menu
+  /// These annotations will have their contextual toolbar/menu completely disabled and cannot be resized,
+  /// but can still be moved around the page.
+  /// 
+  /// Behavior for protected annotations:
+  /// - No contextual toolbar/menu appears when selected
+  /// - Cannot be resized (handles are disabled)
+  /// - Can still be moved by dragging
+  /// - Cannot be deleted, edited, copied, cut, styled, etc.
   /// 
   /// The hideDelete property can be set as:
-  /// - String: 'hideDelete': 'true'
+  /// - String: 'hideDelete': 'true' 
   /// - Boolean: 'hideDelete': true
   /// 
   /// Reference: https://www.nutrient.io/guides/flutter/annotations/annotation-json/
   Future<void> _addProtectedAnnotations() async {
     final protectedAnnotations = [
-      // Protected highlight annotation - delete button will be hidden
+      // Protected highlight annotation - contextual menu disabled, resizing blocked, movement allowed
       HighlightAnnotation(
         id: 'protected-highlight-1',
         name: 'Protected Highlight',
@@ -138,13 +148,13 @@ class _HideDeleteAnnotationExampleWidgetState
         pageIndex: 0,
         creatorName: 'System',
         customData: {
-          'hideDelete': 'true', // This will hide all modification options (delete, edit, copy, cut, style picker, etc.)
+          'hideDelete': 'true', // This will disable contextual menu and resizing, but allow movement
           'protected': 'true',  // Additional custom property for application logic
           'reason': 'System generated annotation', // Additional metadata
         },
       ),
 
-      // Protected note annotation - delete button will be hidden
+      // Protected note annotation - contextual menu disabled, resizing blocked, movement allowed
       NoteAnnotation(
         id: 'protected-note-1',
         name: 'Protected Note',
@@ -158,13 +168,13 @@ class _HideDeleteAnnotationExampleWidgetState
         pageIndex: 0,
         creatorName: 'Administrator',
         customData: {
-          'hideDelete': true, // Boolean value also works - hides all modification options  
+          'hideDelete': true, // Boolean value also works - disables contextual menu and resizing  
           'protected': true,  // Additional custom property for application logic
           'adminGenerated': true, // Additional metadata
         },
       ),
 
-      // Protected free text annotation - delete button will be hidden
+      // Protected free text annotation - contextual menu disabled, resizing blocked, movement allowed
       FreeTextAnnotation(
         id: 'protected-freetext-1',
         name: 'Protected Free Text',
@@ -188,6 +198,7 @@ class _HideDeleteAnnotationExampleWidgetState
           'importance': 'high',
         },
       ),
+
     ];
 
     await document?.addAnnotations(protectedAnnotations);
@@ -196,7 +207,7 @@ class _HideDeleteAnnotationExampleWidgetState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Protected annotations added! Try to select them - no modification options will appear.'),
+              'Protected annotations added! Try selecting them - no contextual menu will appear, but you can still move them.'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -204,7 +215,7 @@ class _HideDeleteAnnotationExampleWidgetState
   }
 
   /// Adds normal annotations without hideDelete custom data
-  /// These annotations will show all modification options normally in their contextual menu
+  /// These annotations will show the full contextual toolbar/menu with all modification options
   /// 
   /// When hideDelete is not present or set to false, users can:
   /// - Delete annotations
@@ -212,11 +223,13 @@ class _HideDeleteAnnotationExampleWidgetState
   /// - Copy/cut annotations
   /// - Access style picker and inspector
   /// - Group/ungroup annotations
+  /// - Resize annotations using handles
+  /// - Move annotations by dragging
   /// 
   /// Reference: https://www.nutrient.io/guides/flutter/annotations/annotation-json/
   Future<void> _addEditableAnnotations() async {
     final editableAnnotations = [
-      // Normal highlight annotation - delete button will be visible
+      // Normal highlight annotation - full contextual menu available
       HighlightAnnotation(
         id: 'editable-highlight-1',
         name: 'Editable Highlight',
@@ -236,7 +249,7 @@ class _HideDeleteAnnotationExampleWidgetState
         },
       ),
 
-      // Normal note annotation - delete button will be visible
+      // Normal note annotation - full contextual menu available
       NoteAnnotation(
         id: 'editable-note-1',
         name: 'Editable Note',
@@ -252,9 +265,10 @@ class _HideDeleteAnnotationExampleWidgetState
         customData: {
           'editable': true,
           'userGenerated': true,
-          // hideDelete is not set, so all modification options will appear
+          // hideDelete is not set, so full contextual menu will appear
         },
       ),
+
     ];
 
     await document?.addAnnotations(editableAnnotations);
@@ -263,7 +277,7 @@ class _HideDeleteAnnotationExampleWidgetState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Editable annotations added! These will show all modification options.'),
+              'Editable annotations added! These will show the full contextual menu with all editing options.'),
           backgroundColor: Colors.green,
         ),
       );
