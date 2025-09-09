@@ -73,6 +73,12 @@
             BOOL isImageDocument = [PspdfkitFlutterHelper isImageDocument:documentPath];
             PSPDFConfiguration *configuration = [PspdfkitFlutterConverter configuration:configurationDictionary isImageDocument:isImageDocument];
             
+            
+            //Override PSPDFResizableView with ProtectedResizableView to disable text selection handles
+            configuration = [configuration configurationUpdatedWithBuilder:^(PSPDFConfigurationBuilder *builder) {
+                [builder overrideClass:PSPDFResizableView.class withClass:ProtectedResizableView.class];
+            }];
+            
             // Only update signature settings if signatureSavingStrategy is specified in the configuration
             if (configurationDictionary[@"signatureSavingStrategy"]) {
                 PSPDFConfiguration *updatedConfig = [configuration configurationUpdatedWithBuilder:^(PSPDFConfigurationBuilder *builder) {

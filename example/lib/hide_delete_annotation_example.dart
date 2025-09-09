@@ -166,6 +166,7 @@ class _HideDeleteAnnotationExampleWidgetState
         ),
         color: const Color(0xFFFF5722),
         pageIndex: 0,
+        flags: [AnnotationFlag.lockedContents],
         creatorName: 'Administrator',
         customData: {
           'hideDelete': true, // Boolean value also works - disables contextual menu and resizing  
@@ -192,13 +193,48 @@ class _HideDeleteAnnotationExampleWidgetState
         backgroundColor: const Color(0xFFFF5722),
         horizontalTextAlign: HorizontalTextAlignment.center,
         verticalAlign: VerticalAlignment.center,
+        flags: [AnnotationFlag.lockedContents],
         customData: {
           'hideDelete': 'true',
           'systemGenerated': true,
           'importance': 'high',
         },
       ),
-
+      InkAnnotation(
+          id: 'ink-annotation-1',
+          bbox: [267.4, 335.1, 97.2, 10.3],
+          createdAt: '2025-01-06T16:36:59+03:00',
+          lines: InkLines(
+            points: [
+              [
+                [269.4, 343.4],
+                [308.4, 341.7],
+                [341.2, 339.6],
+                [358.8, 339.6],
+                [360.9, 339.2],
+                [362.6, 338.8],
+                [361.7, 337.1],
+              ]
+            ],
+            intensities: [
+              [1.0, 0.43, 0.64, 0.83, 0.98, 0.99, 0.97]
+            ],
+          ),
+          lineWidth: 4,
+          opacity: 1.0,
+          flags: [AnnotationFlag.lockedContents],
+          creatorName: 'Nutrient Flutter',
+          name: 'Ink annotation 1',
+          isDrawnNaturally: false,
+          strokeColor: const Color(0xFFFF5722),
+          customData: {
+            "phone": "123-456-7890",
+            "email": "3XZ5y@example.com",
+            "address": "123 Main St, Anytown, USA 12345",
+            "hideDelete": true,
+            "userGenerated": true
+          },
+          pageIndex: 0)
     ];
 
     await document?.addAnnotations(protectedAnnotations);

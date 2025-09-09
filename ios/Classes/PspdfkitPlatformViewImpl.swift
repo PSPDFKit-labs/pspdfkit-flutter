@@ -137,6 +137,7 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
                                onPageView pageView: PDFPageView,
                                appearance: EditMenuAppearance,
                                suggestedMenu: UIMenu) -> UIMenu {
+        ProtectedResizableView.resizingEnabled = false
         print("*** menuForAnnotations delegate method called! Annotations count: \(annotations.count)")
         
         // Check if editing should be disabled based on annotation custom data
@@ -146,6 +147,7 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
             print("*** Disabling context menu entirely for protected annotations")
             // Return an empty menu to completely disable the context menu
             // This allows annotations to remain selectable and movable but prevents all editing actions
+            ProtectedResizableView.resizingEnabled = false
             return UIMenu(title: "", children: [])
         }
         

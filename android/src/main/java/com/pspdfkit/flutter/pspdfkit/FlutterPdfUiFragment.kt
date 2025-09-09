@@ -13,6 +13,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -33,6 +34,8 @@ import com.pspdfkit.ui.PdfUiFragment
 import com.pspdfkit.ui.toolbar.ContextualToolbar
 import com.pspdfkit.ui.toolbar.ToolbarCoordinatorLayout
 import com.pspdfkit.annotations.Annotation
+import com.pspdfkit.ui.annotations.OnAnnotationSelectedListener
+import com.pspdfkit.ui.special_mode.controller.AnnotationSelectionController
 
 
 class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLayout.OnContextualToolbarLifecycleListener {
@@ -44,6 +47,8 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
     
     // Store current contextual toolbar for annotation access
     private var currentContextualToolbar: ContextualToolbar<*>? = null
+
+    private var annotationSelectionController: AnnotationSelectionController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +74,18 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setOnContextualToolbarLifecycleListener(this)
+        pdfFragment?.addOnAnnotationSelectedListener(object : OnAnnotationSelectedListener {
+            override fun onPrepareAnnotationSelection(
+                controller: AnnotationSelectionController,
+                annotation: Annotation,
+                annotationCreated: Boolean
+            ): Boolean {
+                annotationSelectionController = controller
+                return true
+            }
+            override fun onAnnotationSelected(annotation: Annotation, annotationCreated: Boolean) {}
+            override fun onAnnotationDeselected(annotation: Annotation, reselected: Boolean) {}
+        })
     }
 
     /**
@@ -354,29 +371,37 @@ class FlutterPdfUiFragment : PdfUiFragment(), MenuProvider, ToolbarCoordinatorLa
     override fun onPrepareContextualToolbar(toolbar: ContextualToolbar<*>) {
         currentContextualToolbar = toolbar
         val shouldDisableEditing = shouldDisableEditing()
-        
+        annotationSelectionController?.isResizeEnabled = true
         if (shouldDisableEditing) {
             // Completely hide the contextual toolbar for protected annotations
             // This removes access to resize handles and all editing actions
             Log.d("FlutterPdfUiFragment", "Hiding contextual toolbar for protected annotation")
             toolbar.visibility = View.GONE
-            
+            annotationSelectionController?.isResizeEnabled = false
             // This is the most direct approach available in PSPDFKit Android
             // to prevent users from accessing resize handles for protected annotations
+        }else{
+            // Ensure the toolbar is visible for non-protected annotations
+            toolbar.visibility = View.VISIBLE
+            annotationSelectionController?.isResizeEnabled = true
         }
     }
 
     override fun onDisplayContextualToolbar(toolbar: ContextualToolbar<*>) {
         currentContextualToolbar = toolbar
         val shouldDisableEditing = shouldDisableEditing()
-        
+        annotationSelectionController?.isResizeEnabled = true
         if (shouldDisableEditing) {
             // Completely hide the contextual toolbar for protected annotations
             // This removes access to resize handles and all editing actions
             Log.d("FlutterPdfUiFragment", "Hiding contextual toolbar for protected annotation")
             toolbar.visibility = View.GONE
-            
+            annotationSelectionController?.isResizeEnabled = false
             // This effectively prevents access to resize handles and editing controls
+        }else{
+            // Ensure the toolbar is visible for non-protected annotations
+            toolbar.visibility = View.VISIBLE
+            annotationSelectionController?.isResizeEnabled = true
         }
     }
 
