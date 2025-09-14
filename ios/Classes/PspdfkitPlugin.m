@@ -48,13 +48,13 @@ PSPDFSettingKey const PSPDFSettingKeyHybridEnvironment = @"com.pspdfkit.hybrid-e
         if ([licenseKey isKindOfClass:[NSNull class]]|| licenseKey.length <= 0) {
             return;
         }
-        [PSPDFKitGlobal setLicenseKey:licenseKey options:@{PSPDFSettingKeyHybridEnvironment: @"Flutter"}];
+        [PSPDFKitGlobal setLicenseKey:licenseKey options:@{PSPDFSettingKeyHybridEnvironment: @"Flutter", PSPDFSettingKeyFileCoordinationEnabled: @false}];
     } else if ([@"setLicenseKeys" isEqualToString:call.method]) {
         NSString *iOSLicenseKey = call.arguments[@"iOSLicenseKey"];
         if ([iOSLicenseKey isKindOfClass:[NSNull class]]|| iOSLicenseKey.length <= 0) {
             return;
         }
-        [PSPDFKitGlobal setLicenseKey:iOSLicenseKey options:@{PSPDFSettingKeyHybridEnvironment: @"Flutter"}];
+        [PSPDFKitGlobal setLicenseKey:iOSLicenseKey options:@{PSPDFSettingKeyHybridEnvironment: @"Flutter", PSPDFSettingKeyFileCoordinationEnabled: @false}];
     }else if ([@"present" isEqualToString:call.method]) {
         
         NSString *documentPath = call.arguments[@"document"];
