@@ -25,6 +25,7 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
         self.pdfViewController = controller
         self.pdfViewController?.delegate = self
         
+        
         // Set the host view for the annotation toolbar controller
         controller.annotationToolbarController?.updateHostView(nil, container: nil, viewController: controller)
         CustomToolbarHelper.setupCustomToolbarItems(for: pdfViewController!, customToolbarItems:customToolbarItems, callbacks: customToolbarCallbacks)
@@ -44,6 +45,7 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
     public func pdfViewController(_ pdfController: PDFViewController, didSelect annotations: [Annotation], on pageView: PDFPageView) {
         // Call the event helper to notify the listeners.
         eventsHelper?.annotationSelected(annotations: annotations)
+        
     }
     
     public func pdfViewController(_ pdfController: PDFViewController, didDeselect annotations: [Annotation], on pageView: PDFPageView) {
@@ -114,6 +116,115 @@ public class PspdfkitPlatformViewImpl: NSObject, NutrientViewControllerApi, PDFV
         // This ensures our tap recognizer doesn't block PSPDFKit's built-in gestures
         return true
     }
+    
+    // MARK: - Menu Filtering Delegate Methods
+    
+    /**
+     * Customizes the annotation context menu by completely disabling it for protected annotations.
+     * 
+     * This delegate method is called when the user selects annotations and a context menu is displayed.
+     * For annotations with 'hideDelete': true in customData, the entire context menu is disabled
+     * to prevent all editing actions while still allowing annotation movement.
+     * 
+     * References:
+     * - iOS Menu Customization: https://www.nutrient.io/guides/ios/customizing-the-interface/customizing-menus/
+     * - PDFViewController Delegate: https://www.nutrient.io/api/ios/documentation/pspdfkit/pdfviewcontrollerdelegate/
+     * - UIMenu API: https://developer.apple.com/documentation/uikit/uimenu
+     * - Annotation Custom Data: https://www.nutrient.io/guides/ios/annotations/annotation-json/
+     */
+    public func pdfViewController(_ pdfController: PDFViewController, 
+                               menuForAnnotations annotations: [Annotation],
+                               onPageView pageView: PDFPageView,
+                               appearance: EditMenuAppearance,
+                               suggestedMenu: UIMenu) -> UIMenu {
+        ProtectedResizableView.resizingEnabled = false
+        print("*** menuForAnnotations delegate method called! Annotations count: \(annotations.count)")
+        
+        // Check if editing should be disabled based on annotation custom data
+        let shouldDisableEditing = shouldDisableEditing(for: annotations)
+        
+        if shouldDisableEditing {
+            print("*** Disabling context menu entirely for protected annotations")
+            // Return an empty menu to completely disable the context menu
+            // This allows annotations to remain selectable and movable but prevents all editing actions
+            ProtectedResizableView.resizingEnabled = false
+            return UIMenu(title: "", children: [])
+        }
+        
+        print("*** Returning original menu with \(suggestedMenu.children.count) children")
+        return suggestedMenu
+    }
+    
+    // MARK: - Menu Filtering Helper
+    
+    /**
+     * Helper method to determine if annotation editing should be completely disabled based on custom data.
+     * 
+     * Checks if any of the selected annotations have 'hideDelete' set to true in their customData.
+     * When true, the entire context menu will be disabled to prevent all editing actions
+     * while still allowing annotation selection and movement.
+     * 
+     * References:
+     * - Annotation Custom Data: https://www.nutrient.io/guides/ios/annotations/annotation-json/
+     * - Annotation Class: https://www.nutrient.io/api/ios/documentation/pspdfkit/annotation/
+     *
+     * @param annotations The annotations to check
+     * @return True if editing should be disabled (context menu hidden), false otherwise
+     */
+    private func shouldDisableEditing(for annotations: [Annotation]) -> Bool {
+        // Check each annotation's custom data
+        for annotation in annotations {
+            if let customData = annotation.customData,
+               let hideDelete = customData["hideDelete"] {
+                // Check if hideDelete is set to true (as string or boolean)
+                if (hideDelete as? String) == "true" || (hideDelete as? Bool) == true {
+                    print("*** Disabling editing for annotation with hideDelete custom data")
+                    return true
+                }
+            }
+        }
+        
+        return false
+    }
+    
+    // MARK: - Annotation Interaction Control
+    // 
+    // Note: The previous filterActionsFromMenu method has been removed since we now
+    // completely disable the context menu for protected annotations rather than
+    // filtering individual actions. This provides a cleaner user experience.
+    
+    
+    /**
+     * Helper method to check if an individual annotation is protected.
+     * 
+     * @param annotation The annotation to check
+     * @return True if the annotation has hideDelete set to true, false otherwise
+     */
+    private func isAnnotationProtected(_ annotation: Annotation) -> Bool {
+        if let customData = annotation.customData,
+           let hideDelete = customData["hideDelete"] {
+            return (hideDelete as? String) == "true" || (hideDelete as? Bool) == true
+        }
+        return false
+    }
+    
+    
+    /**
+     * PDFViewController delegate method to control annotation removal.
+     * 
+     * Blocks removal of protected annotations.
+     */
+    public func pdfViewController(_ pdfController: PDFViewController, shouldDelete annotations: [Annotation]) -> Bool {
+        for annotation in annotations {
+            if isAnnotationProtected(annotation) {
+                print("*** Blocking deletion for protected annotation")
+                return false
+            }
+        }
+        return true
+    }
+    
+    
 
     func setFormFieldValue(value: String, fullyQualifiedName: String, completion: @escaping (Result<Bool?, any Error>) -> Void) {
         do {

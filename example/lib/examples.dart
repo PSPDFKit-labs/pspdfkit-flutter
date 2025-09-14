@@ -42,6 +42,7 @@ import 'manual_save_example.dart';
 import 'annotation_processing_example.dart';
 import 'password_example.dart';
 import 'nutrient_annotation_creation_mode_example.dart';
+import 'hide_delete_annotation_example.dart';
 
 const String _documentPath = 'PDFs/PSPDFKit.pdf';
 const String _measurementsDocs = 'PDFs/Measurements.pdf';
@@ -109,6 +110,12 @@ List<NutrientExampleItem> examples(BuildContext context) => [
         description:
             'Programmatically adds and removes annotations using a custom Widget.',
         onTap: () => annotationsExample(context),
+      ),
+      NutrientExampleItem(
+        title: 'Protected Annotations (Move Only)',
+        description:
+            'Demonstrates how to create protected annotations that can be moved but not edited or resized. Uses custom data to disable contextual menus while preserving movement functionality.',
+        onTap: () => hideDeleteAnnotationExample(context),
       ),
       NutrientExampleItem(
         title: 'Annotation Flags Example',
@@ -613,4 +620,11 @@ void annotationFlagsExample(BuildContext context) {
     const AnnotationFlagsExample(),
     context,
   );
+}
+
+void hideDeleteAnnotationExample(BuildContext context) async {
+  final extractedDocument = await extractAsset(context, _documentPath);
+  await Navigator.of(context).push<dynamic>(MaterialPageRoute<dynamic>(
+      builder: (_) => HideDeleteAnnotationExampleWidget(
+          documentPath: extractedDocument.path)));
 }
