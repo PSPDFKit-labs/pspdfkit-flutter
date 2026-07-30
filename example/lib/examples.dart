@@ -30,6 +30,7 @@ import 'utils/file_utils.dart';
 import 'utils/platform_utils.dart';
 import 'package:nutrient_example/configuration_example.dart';
 import 'package:nutrient_example/instant_collaboration_example.dart';
+import 'package:nutrient_example/instant_switch_stress_example.dart';
 import 'package:nutrient_example/nutrient_instant_view_example.dart';
 import 'package:nutrient_example/measurement_tools.dart';
 import 'package:nutrient_example/pdf_generation_example.dart';
@@ -289,6 +290,18 @@ List<NutrientExampleItem> examples(BuildContext context) => [
           onTap: () => Navigator.of(context).push<dynamic>(
             MaterialPageRoute<dynamic>(
               builder: (_) => const NutrientInstantViewExample(),
+            ),
+          ),
+        ),
+      if (!kIsWeb)
+        NutrientExampleItem(
+          title: 'Instant Switch Stress (repro #134164)',
+          description:
+              'Automated document-switch / close-reopen cycles that measure '
+              'Instant load latency.',
+          onTap: () => Navigator.of(context).push<dynamic>(
+            MaterialPageRoute<dynamic>(
+              builder: (_) => const InstantSwitchStressExample(),
             ),
           ),
         ),
