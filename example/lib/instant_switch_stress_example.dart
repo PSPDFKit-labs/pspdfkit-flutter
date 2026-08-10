@@ -7,9 +7,17 @@
 ///  This notice may not be removed from this file.
 ///
 
-/// Repro harness for Zendesk #134164 — "document sometimes takes more than 40
-/// seconds to load when users frequently switch between documents or repeatedly
-/// close and reopen documents" (Android, Instant).
+/// Regression harness for Zendesk #134164 — "document sometimes takes more than
+/// 40 seconds to load when users frequently switch between documents or
+/// repeatedly close and reopen documents" (Android, Instant).
+///
+/// Fixed upstream in Nutrient Android SDK 11.6.2 (AND-1957): disabling listening
+/// for server changes — which includes closing an embedded Instant view — now
+/// cancels the in-flight sync long-poll instead of leaving it holding a
+/// connection until the server releases it. Before that fix every document ever
+/// viewed kept a background `/sync` connection open, and after enough distinct
+/// documents the stale long-polls exhausted the per-host connection pool. This
+/// harness stays in the catalog to catch a regression.
 ///
 /// Drives the public [NutrientInstantView] widget through an automated cycle
 /// of either
@@ -27,8 +35,9 @@
 ///
 ///     adb logcat -s Nutri.InstAnnotSyncMgr Instant::Sync flutter
 ///
-/// The 40 s+ symptom shows up as `loadedMs` climbing across cycles while
-/// `Nutri.InstAnnotSyncMgr` logs `ALREADY_SYNCING`.
+/// A regression shows up as `loadedMs` climbing across cycles while
+/// `Nutri.InstAnnotSyncMgr` logs `ALREADY_SYNCING`. On a 12-cycle switch sweep
+/// against 11.6.2 every cycle should land well under a second.
 library;
 
 import 'dart:async';
@@ -37,11 +46,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:nutrient_example/utils/jwt_util.dart';
 // The Instant document-open signal is read straight off the native fragment.
-// 5.6's NutrientInstantView has no onControllerReady / per-view adapter, and
-// Nutrient.androidAdapter can only be set once at initialize() time, so
-// polling the fragment is the least invasive way to time a mount. This is
-// measurement-only — the viewer itself is the public NutrientInstantView,
-// exactly what the customer integrates.
+// 5.6's NutrientInstantView has no onControllerReady, so polling the fragment
+// is the least invasive way to time a mount. This is measurement-only — the
+// viewer itself is the public NutrientInstantView, exactly what the customer
+// integrates.
 // `getPdfFragment` and `PdfFragment.document` live on generated extensions, so
 // those have to be shown alongside the types themselves. The show clause also
 // keeps the bindings' Android-side `EdgeInsets` / `Size` / `PageLayoutMode` /
@@ -52,119 +60,8 @@ import 'package:nutrient_flutter_android/src/bindings/nutrient_android_sdk_bindi
     show
         FragmentContainerPlatformView,
         FragmentContainerPlatformView$Companion$$Methods,
-        InstantPdfDocument$$Methods,
-        InstantPdfFragment,
-        InstantPdfFragment$$Methods,
-        PdfFragment,
-        PdfFragment$$Methods,
-        PdfUiFragment,
-        Context;
-// ignore: depend_on_referenced_packages
-import 'package:nutrient_flutter_android/nutrient_flutter_android.dart'
-    show AndroidAdapter;
-// ignore: depend_on_referenced_packages
-import 'package:nutrient_flutter_platform_interface/nutrient_flutter_platform_interface.dart'
-    as platform show Nutrient;
-// Hide the main package's AndroidAdapter re-export (a web-compat stub) — the
-// adapter must extend the real one from nutrient_flutter_android.
-import 'package:nutrient_flutter/nutrient_flutter.dart' hide AndroidAdapter;
-
-/// Workaround for the Instant stale-long-poll leak (ZD#134164):
-/// a platform adapter, public API only, that prevents the Instant
-/// listen-for-changes long-poll from starting and stops listening on the
-/// cached document at teardown. Registering the adapter does not interact
-/// with SDK licensing.
-///
-/// [enabled] gates the behaviour so a single build can compare baseline vs
-/// workaround from the UI toggle.
-class InstantSyncLifecycleAdapter extends AndroidAdapter {
-  /// Toggled from the harness UI.
-  static bool enabled = true;
-
-  PdfFragment? _fragment;
-
-  @override
-  Future<void> onFragmentAttached(
-    PdfUiFragment fragment,
-    Context context,
-  ) async {
-    // Nothing to do at attach; the document is resolved at detach time.
-  }
-
-  @override
-  Future<void> onPdfFragmentReady(PdfFragment pdfFragment) async {
-    _fragment = pdfFragment;
-    if (!enabled) return;
-    // Prevent the listen-for-changes long-poll from ever starting. Timing
-    // matters: this hook fires before the Instant document finishes
-    // downloading. Stopping the poll only at dispose is NOT enough — an
-    // in-flight long-poll holds its connection-pool slot until the server
-    // hold expires (~47-60 s measured), so rapid switching still starves
-    // the pool.
-    try {
-      pdfFragment
-          .as(InstantPdfFragment.type)
-          .listenToServerChangesWhenVisible = false;
-      debugPrint('[REPRO][workaround] disabled listen-when-visible');
-    } catch (e) {
-      debugPrint('[REPRO][workaround] listen-when-visible failed: $e');
-    }
-  }
-
-  /// Manually pulls/pushes annotations for the currently mounted view —
-  /// the on-demand replacement for the disabled real-time listener.
-  /// Fire-and-forget: InstantPdfFragment.syncAnnotations() is null-safe;
-  /// errors surface through InstantDocumentListener callbacks.
-  void syncNow() {
-    final fragment = _fragment;
-    if (fragment == null) {
-      debugPrint('[REPRO][manual-sync] no fragment mounted');
-      return;
-    }
-    try {
-      fragment.as(InstantPdfFragment.type).syncAnnotations();
-      debugPrint('[REPRO][manual-sync] requested');
-    } catch (e) {
-      debugPrint('[REPRO][manual-sync] failed: $e');
-    }
-  }
-
-  @override
-  Future<void> onFragmentDetached() async {
-    final fragment = _fragment;
-    _fragment = null;
-    if (fragment == null) return;
-    if (!enabled) return;
-    try {
-      // Belt-and-braces: also stop listening on the cached document.
-      final document = fragment.as(InstantPdfFragment.type).document$1;
-      if (document != null) {
-        document.setListeningToServerChanges(false);
-        document.release();
-      }
-    } catch (e) {
-      debugPrint('[REPRO][workaround] detach cleanup failed: $e');
-    }
-  }
-}
-
-/// The shared adapter instance — also used for [InstantSyncLifecycleAdapter.syncNow].
-final InstantSyncLifecycleAdapter instantSyncAdapter =
-    InstantSyncLifecycleAdapter();
-
-/// Installs the adapter into the global slot. Guarded so hot-restart or
-/// repeated example entry doesn't throw StateError. Note: this does not
-/// affect license initialization, which happens separately through
-/// Nutrient.initialize in the main package.
-void _ensureWorkaroundAdapterInstalled() {
-  // ignore: deprecated_member_use
-  if (platform.Nutrient.androidAdapter is InstantSyncLifecycleAdapter) return;
-  try {
-    platform.Nutrient.initialize(androidAdapter: instantSyncAdapter);
-  } on StateError {
-    debugPrint('[REPRO][workaround] platform.Nutrient already initialized');
-  }
-}
+        PdfFragment$$Methods;
+import 'package:nutrient_flutter/nutrient_flutter.dart';
 
 /// 10.0.2.2 is the Android emulator's loopback to the host. Point this at a
 /// Document Engine that has the `fresh-doc-01`..`fresh-doc-30` and
@@ -262,14 +159,6 @@ class _InstantSwitchStressExampleState
   int _viewKey = 0;
 
   final List<_CycleResult> _results = <_CycleResult>[];
-
-  @override
-  void initState() {
-    super.initState();
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      _ensureWorkaroundAdapterInstalled();
-    }
-  }
 
   /// Completed by [NutrientInstantViewAndroid.onControllerReady] for the
   /// current cycle.
@@ -376,11 +265,6 @@ class _InstantSwitchStressExampleState
             debugPrint('[REPRO] cycle=$_cycle documentOpen viewId=$viewId '
                 'elapsedMs=${_stopwatch?.elapsedMilliseconds}');
             loaded.complete();
-            if (InstantSyncLifecycleAdapter.enabled) {
-              // Demonstrate the manual-sync path that replaces the disabled
-              // real-time listener.
-              instantSyncAdapter.syncNow();
-            }
           }
           return;
         }
@@ -430,16 +314,6 @@ class _InstantSwitchStressExampleState
             onRun: _run,
             onStop: () => setState(() => _running = false),
           ),
-          if (defaultTargetPlatform == TargetPlatform.android)
-            SwitchListTile(
-              dense: true,
-              title: const Text('Workaround: stop stale Instant sync'),
-              value: InstantSyncLifecycleAdapter.enabled,
-              onChanged: _running
-                  ? null
-                  : (value) => setState(
-                      () => InstantSyncLifecycleAdapter.enabled = value),
-            ),
           Container(
             width: double.infinity,
             color: Colors.grey.shade100,

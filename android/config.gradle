@@ -40,9 +40,11 @@ ext.nutrientVersion = localProperties.getProperty('pspdfkit.version')
 if (nutrientVersion == null || nutrientVersion == '') {
     // Pinned to the released Nutrient Android SDK for this release. The plugin uses
     // 11.5 APIs (AnnotationToolbar / AnnotationPopupToolbar /
-    // OnPreparePopupToolbarListener). Override via pspdfkit.version in
+    // OnPreparePopupToolbarListener). 11.6.2 is the minimum for Instant apps:
+    // it fixes the stale sync long-poll that stalled document loads when
+    // switching between documents (AND-1957). Override via pspdfkit.version in
     // local.properties to build against a nightly/SNAPSHOT.
-    ext.nutrientVersion = '11.5.1'
+    ext.nutrientVersion = '11.6.2'
 }
 
 ext.nutrientMavenModuleName = 'nutrient'
